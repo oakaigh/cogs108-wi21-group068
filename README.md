@@ -1,12 +1,12 @@
 # cogs108-wi21-jjkln068
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/COGS108/group068_wi21/blob/main)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/COGS108/group068_wi21)
 
 UCSD COGS108 Winter 2021    \
 Jared, Jimin, Kane, Lawrence, Nisha \
 Group Number `068`
 
 ## How Do I Work on This Repo?
-For collaborative editing, open this repo in [Google Colab](https://colab.research.google.com/github/COGS108/group068_wi21/blob/main) (GitHub authorization required).
+For collaborative editing, open this repo in [Google Colab](https://colab.research.google.com/github/COGS108/group068_wi21) (GitHub authorization required).
 
 ## About This Repo
 This is your group repo for your final project for COGS108.
