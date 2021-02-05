@@ -36,9 +36,10 @@ class log:
     def err(self, string): return logging.error(self.fmt(string))
     def warn(self, string): return logging.warning(self.fmt(string))
     def debug(self, string): return logging.debug(self.fmt(string))
-    def dump(self, obj):
-        self.debug('object dumped')
-        self.debug(obj)
+    def dump(self, obj, pretty = True):
+        self.debug(f'object dumped. len %d' % len(obj))
+        self.debug(obj if not pretty else
+                __import__('pprint').pformat(obj, indent = 4))
 
     def fatal(self, string):
         self.err(self.fmt(string))

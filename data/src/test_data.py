@@ -6,9 +6,6 @@ from api_youtube import youtube
 
 import threading
 
-import pprint
-pp = pprint.PrettyPrinter(indent = 4)
-
 
 conf = {
     'http': {
@@ -23,9 +20,11 @@ modules = {
     'http': conf['http']['module']
 }
 
+logger = log('test')
+
 def tiktok_test():
     def item_each_fn(item):
-        pp.pprint({
+        logger.dump({
             'id': item.get('id'),
             'time_published': decode.time(item.get('createTime')),
             'stats': select.fromdict(
@@ -48,15 +47,14 @@ def tiktok_test():
         item_each_fn = item_each_fn
     )
 
-    print(len(test_tiktok))
-    pp.pprint(test_tiktok)
+    logger.dump(test_tiktok)
 
 
 
 
 def youtube_test():
     def item_each_fn(item):
-        pp.pprint({
+        logger.dump({
             'id': item.get(youtube.parts.ID),
             'time_published': decode.time(
                     item.get(youtube.parts.SNIPPET, {}).get('publishedAt'),
@@ -92,8 +90,7 @@ def youtube_test():
         item_each_fn = item_each_fn
     )
 
-    print(len(test_youtube))
-    pp.pprint(test_youtube)
+    logger.dump(test_youtube)
 
 
 log.enable(level = log.levels.DEBUG)

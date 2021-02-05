@@ -12,8 +12,8 @@ class fasthttp(http):
             raise NotImplementedError
 
         return {
-            http.types.RAW: res,
-            http.types.STREAM: res.content,
-            http.types.TEXT: res.text,
-            http.types.JSON: res.json()
-        }.get(type)
+            http.types.RAW: lambda: res,
+            http.types.STREAM: lambda: res.content,
+            http.types.TEXT: lambda: res.text,
+            http.types.JSON: lambda: res.json()
+        }.get(type, lambda: None)()
