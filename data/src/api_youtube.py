@@ -1,4 +1,4 @@
-from utils import log, merge
+from utils import log, formats
 from webapi import webapi, http
 
 
@@ -30,11 +30,34 @@ class youtube(webapi):
 
     def trending(self,
         count = 1,
-        parts = [parts.SNIPPET],
+        parts = [
+            parts.ID,
+            parts.SNIPPET,
+            parts.STATS,
+            parts.details.CONTENT
+        ],
         region = None, language = None,
+        item_decode = True,
         item_each_fn = None
     ) -> dict:
         max_count = 50
+        item_hint = {
+            'id': youtube.parts.ID,
+            'stats': {
+                'like': [youtube.parts.STATS, 'likeCount'],
+                'comment': [youtube.parts.STATS, 'commentCount'],
+                'view': [youtube.parts.STATS, 'viewCount'],
+            },
+            'time': (
+                [youtube.parts.SNIPPET, 'publishedAt'],
+                {'format': formats.time.ISO8601}
+            ),
+            'length': (
+                [youtube.parts.details.CONTENT, 'duration'],
+                {'format': formats.time.ISO8601}
+            )
+        }
+        item_decoders = super().types.social.post.media
         item_handlers = [item_each_fn]
 
         res = []
@@ -45,7 +68,7 @@ class youtube(webapi):
             try:
                 resp = super().get(
                     url = 'youtube/v3/videos',
-                    type = http.types.JSON,
+                    type = http.dtypes.JSON,
                     query = {
                         'part': ','.join(parts or []),
                         'chart': 'mostPopular',
@@ -70,7 +93,15 @@ class youtube(webapi):
                 for h in item_handlers:
                     if h:
                         for item in items:
-                            item_each_fn(item)
+                            print(item_hint)
+                            item_each_fn(
+                                item if not item_decode
+                                else webapi.handle(
+                                    item = item,
+                                    hint = item_hint,
+                                    decoders = item_decoders
+                                )
+                            )
 
             page_token = resp.get('nextPageToken')
             if not page_token:

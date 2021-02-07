@@ -1,4 +1,4 @@
-from utils import log
+from utils import log, formats
 from webapi import webapi, http
 
 
@@ -20,9 +20,28 @@ class tiktok(webapi):
         count = 1,
         min_cursor = 0, max_cursor = 0,
         region = None, language = None,
+        item_decode = True,
         item_each_fn = None
     ) -> dict:
         max_count = 35
+        item_hint = {
+            'id': 'id',
+            'stats': {
+                'like': ['stats', 'diggCount'],
+                'comment': ['stats', 'commentCount'],
+                'view': ['stats', 'playCount'],
+            },
+            'time': (
+                'createTime',
+                {'format': formats.time.UNIX}
+            ),
+            'length': (
+                ['video', 'duration'],
+                {'format': formats.time.UNIX}
+            )
+        }
+        item_decoders = super().types.social.post.media
+        item_handlers = [item_each_fn]
 
         res = []
 
@@ -34,7 +53,7 @@ class tiktok(webapi):
             try:
                 resp = super().get(
                     url = 'api/item_list',
-                    type = http.types.JSON,
+                    type = http.dtypes.JSON,
                     query = {
                         'appId': 1233,
                         'id': 1,
@@ -60,9 +79,17 @@ class tiktok(webapi):
                 self.log.warn('invalid entry')
             else:
                 res += items
-                if item_each_fn:
-                    for item in items:
-                        item_each_fn(item)
+                for h in item_handlers:
+                    if h:
+                        for item in items:
+                            item_each_fn(
+                                item if not item_decode
+                                else webapi.handle(
+                                    item = item,
+                                    hint = item_hint,
+                                    decoders = item_decoders
+                                )
+                            )
 
             if not resp.get('hasMore') and not first:
                 self.log.warn(f'less data returned than expected. '

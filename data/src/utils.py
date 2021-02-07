@@ -7,6 +7,63 @@ import datetime
 import dateutil.parser
 import isodate
 
+class formats:
+    class time:
+        UNIX = 0
+        ISO8601 = 1
+
+class decode:
+    @staticmethod
+    def unexpected(data, t):
+        return data == None or isinstance(data, t)
+
+    @staticmethod
+    def time(data, format = formats.time.UNIX):
+        if decode.unexpected(data, datetime.datetime):
+            return data
+
+        try:
+            return {
+                formats.time.UNIX:
+                    lambda data: datetime.datetime.fromtimestamp(decode.integer(data)),
+                formats.time.ISO8601:
+                    lambda data: dateutil.parser.isoparse(data)
+            }.get(format, lambda data: None)(data)
+        except:
+            return None
+
+    @staticmethod
+    def timedelta(data, format = formats.time.UNIX):
+        if decode.unexpected(data, datetime.timedelta):
+            return data
+
+        try:
+            return {
+                formats.time.UNIX:
+                    lambda data:
+                        datetime.timedelta(
+                            seconds = decode.integer(data)
+                        ),
+                formats.time.ISO8601:
+                    lambda data: isodate.parse_duration(data)
+            }.get(format, lambda data: None)(data)
+        except:
+            return None
+
+    @staticmethod
+    def integer(data):
+        if decode.unexpected(data, int):
+            return data
+        try: return int(data)
+        except: return None
+
+class dtypes:
+    string = None
+    raw = string
+    integer = decode.integer
+    time = decode.time
+    duration = decode.timedelta
+
 class log:
     class levels:
         NONE = 0
@@ -91,59 +148,29 @@ class merge:
 
 class select:
     @staticmethod
-    def fromdict(o, renamed_keys, encoder = None):
+    def fromdict(o: dict, renamed_keys: dict, encoder = None):
         if o == None:
             return None
 
         ret = {}
         for old_k, new_k in renamed_keys.items():
             v = o.get(old_k)
-            ret[new_k or old_k] = v if not encoder else encoder(v)
+            if v == None:
+                continue
+            if isinstance(new_k, dict):
+                ret[old_k] = select.fromdict(v, new_k, encoder)
+            else:
+                ret[new_k or old_k] = v if not encoder else encoder(v)
+
         return ret
 
-class decode:
-    class formats:
-        class time:
-            UNIX = 0
-            ISO8601 = 1
-
     @staticmethod
-    def unexpected(data, t):
-        return data == None or isinstance(data, t)
-
-    @staticmethod
-    def time(data, format = formats.time.UNIX):
-        if decode.unexpected(data, datetime.datetime):
-            return data
-
-        try:
-            return {
-                decode.formats.time.UNIX:
-                    lambda data: datetime.datetime.fromtimestamp(decode.integer(data)),
-                decode.formats.time.ISO8601:
-                    lambda data: dateutil.parser.isoparse(data)
-            }.get(format, lambda data: None)(data)
-        except:
-            return None
-
-    @staticmethod
-    def timedelta(data, format = formats.time.UNIX):
-        if decode.unexpected(data, datetime.timedelta):
-            return data
-
-        try:
-            return {
-                decode.formats.time.UNIX:
-                    lambda data: datetime.timedelta(seconds = decode.integer(data)),
-                decode.formats.time.ISO8601:
-                    lambda data: isodate.parse_duration(data)
-            }.get(format, lambda data: None)(data)
-        except:
-            return None
-
-    @staticmethod
-    def integer(data):
-        if decode.unexpected(data, int):
-            return data
-        try: return int(data)
-        except: return None
+    def descend(o: dict, keys: list):
+        curr_v = o
+        for k in keys:
+            if not isinstance(curr_v, dict):
+                return curr_v
+            curr_v = curr_v.get(k)
+            if curr_v == None:
+                break
+        return curr_v

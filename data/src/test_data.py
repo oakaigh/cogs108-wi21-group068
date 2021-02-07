@@ -20,10 +20,16 @@ modules = {
     'http': conf['http']['module']
 }
 
+count = 2000
+log_resp = False
+
+
 logger = log('test')
 
 def tiktok_test():
     def item_each_fn(item):
+        logger.dump(item)
+        '''
         logger.dump({
             'id': item.get('id'),
             'time_published': decode.time(item.get('createTime')),
@@ -38,27 +44,28 @@ def tiktok_test():
             ),
             'duration': decode.timedelta(item.get('video', {}).get('duration'))
         })
+        '''
 
     test_tiktok = tiktok(
         modules = modules,
         headers = conf.get('headers')
     ).trending(
-        count = 1,
+        count = count,
         item_each_fn = item_each_fn
     )
 
-    logger.dump(test_tiktok)
-
-
+    if log_resp: logger.dump(test_tiktok)
 
 
 def youtube_test():
     def item_each_fn(item):
+        logger.dump(item)
+        '''
         logger.dump({
             'id': item.get(youtube.parts.ID),
             'time_published': decode.time(
                     item.get(youtube.parts.SNIPPET, {}).get('publishedAt'),
-                    format = decode.formats.time.ISO8601
+                    format = formats.time.ISO8601
                 ),
             'stats': select.fromdict(
                 o = item.get(youtube.parts.STATS),
@@ -71,16 +78,17 @@ def youtube_test():
             ),
             'duration': decode.time(
                     item.get(youtube.parts.details.CONTENT, {}).get('duration'),
-                    format = decode.formats.time.ISO8601
+                    format = formats.time.ISO8601
                 )
         })
+        '''
 
     test_youtube = youtube(
         modules = modules,
         key = 'AIzaSyBKsF33Y1McGDdBWemcfcTbVyJu23XDNIk',
         headers = conf.get('headers')
     ).trending(
-        count = 1,
+        count = count,
         parts = [
             youtube.parts.ID,
             youtube.parts.SNIPPET,
@@ -90,7 +98,7 @@ def youtube_test():
         item_each_fn = item_each_fn
     )
 
-    logger.dump(test_youtube)
+    if log_resp: logger.dump(test_youtube)
 
 
 log.enable(level = log.levels.DEBUG)
