@@ -1,4 +1,4 @@
-from utils import log, formats
+from utils import log, formats, select
 from webapi import webapi, http
 
 
@@ -38,6 +38,7 @@ class youtube(webapi):
         ],
         region = None, language = None,
         item_decode = True,
+        item_expect = None,
         item_each_fn = None
     ) -> dict:
         max_count = 50
@@ -59,6 +60,9 @@ class youtube(webapi):
         }
         item_decoders = super().types.social.post.media
         item_handlers = [item_each_fn]
+
+        if item_decode and item_expect != None:
+            item_hint = select.fromdict(o = item_hint, renamed_keys = item_expect)
 
         res = []
 
@@ -93,7 +97,6 @@ class youtube(webapi):
                 for h in item_handlers:
                     if h:
                         for item in items:
-                            print(item_hint)
                             item_each_fn(
                                 item if not item_decode
                                 else webapi.handle(

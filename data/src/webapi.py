@@ -79,7 +79,13 @@ class webapi:
 
         for k, v in hint.items():
             if isinstance(v, dict):
-                ret[k] = webapi.handle(item = item, hint = v, decoders = decoders.get(k))
+                ret[k] = webapi.handle(
+                    item = item,
+                    hint = v,
+                    decoders = decoders.get(k),
+                    decoder_default = decoder_default,
+                    inplace = inplace
+                )
             else:
                 keys, args = None, None
                 if isinstance(v, tuple):

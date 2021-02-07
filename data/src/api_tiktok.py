@@ -1,4 +1,4 @@
-from utils import log, formats
+from utils import log, formats, select
 from webapi import webapi, http
 
 
@@ -21,6 +21,7 @@ class tiktok(webapi):
         min_cursor = 0, max_cursor = 0,
         region = None, language = None,
         item_decode = True,
+        item_expect = None,
         item_each_fn = None
     ) -> dict:
         max_count = 35
@@ -42,6 +43,9 @@ class tiktok(webapi):
         }
         item_decoders = super().types.social.post.media
         item_handlers = [item_each_fn]
+
+        if item_decode and item_expect != None:
+            item_hint = select.fromdict(o = item_hint, renamed_keys = item_expect)
 
         res = []
 

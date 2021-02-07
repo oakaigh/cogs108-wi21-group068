@@ -20,7 +20,7 @@ modules = {
     'http': conf['http']['module']
 }
 
-count = 2000
+count = 1
 log_resp = False
 
 
@@ -95,6 +95,7 @@ def youtube_test():
             youtube.parts.STATS,
             youtube.parts.details.CONTENT
         ],
+        item_expect = {'id': None},
         item_each_fn = item_each_fn
     )
 
