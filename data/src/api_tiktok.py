@@ -20,34 +20,35 @@ class tiktok(webapi):
         count = 1,
         min_cursor = 0, max_cursor = 0,
         region = None, language = None,
-        item_decode = True,
-        item_expect = None,
-        item_each_fn = None
+        want = None,
+        each_fn = None
     ) -> dict:
-        max_count = 35
-        item_hint = {
-            'id': 'id',
-            'stats': {
-                'like': ['stats', 'diggCount'],
-                'comment': ['stats', 'commentCount'],
-                'view': ['stats', 'playCount'],
-            },
-            'time': (
-                'createTime',
-                {'format': formats.time.UNIX}
-            ),
-            'length': (
-                ['video', 'duration'],
-                {'format': formats.time.UNIX}
-            )
-        }
-        item_decoders = super().types.social.post.media
-        item_handlers = [item_each_fn]
-
-        if item_decode and item_expect != None:
-            item_hint = select.fromdict(o = item_hint, renamed_keys = item_expect)
-
         res = []
+
+        api_type = super().types.social.post.media
+        item_handler = super().item_handler(
+            item_hint = {
+                'id': 'id',
+                'stats': {
+                    'like': ['stats', 'diggCount'],
+                    'comment': ['stats', 'commentCount'],
+                    'view': ['stats', 'playCount'],
+                },
+                'time': (
+                    'createTime',
+                    {'format': formats.time.UNIX}
+                ),
+                'length': (
+                    ['video', 'duration'],
+                    {'format': formats.time.UNIX}
+                )
+            },
+            item_decoders = api_type,
+            item_expect = want,
+            item_each_fns = [each_fn]
+        )
+
+        max_count = 35
 
         first = True
         real_count = int()
@@ -56,7 +57,7 @@ class tiktok(webapi):
 
             try:
                 resp = super().get(
-                    url = 'api/item_list',
+                    url = 'api/item_list/',
                     type = http.dtypes.JSON,
                     query = {
                         'appId': 1233,
@@ -83,17 +84,7 @@ class tiktok(webapi):
                 self.log.warn('invalid entry')
             else:
                 res += items
-                for h in item_handlers:
-                    if h:
-                        for item in items:
-                            item_each_fn(
-                                item if not item_decode
-                                else webapi.handle(
-                                    item = item,
-                                    hint = item_hint,
-                                    decoders = item_decoders
-                                )
-                            )
+                item_handler.handle(items)
 
             if not resp.get('hasMore') and not first:
                 self.log.warn(f'less data returned than expected. '

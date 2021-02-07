@@ -37,41 +37,42 @@ class youtube(webapi):
             parts.details.CONTENT
         ],
         region = None, language = None,
-        item_decode = True,
-        item_expect = None,
-        item_each_fn = None
+        want = None,
+        each_fn = None
     ) -> dict:
-        max_count = 50
-        item_hint = {
-            'id': youtube.parts.ID,
-            'stats': {
-                'like': [youtube.parts.STATS, 'likeCount'],
-                'comment': [youtube.parts.STATS, 'commentCount'],
-                'view': [youtube.parts.STATS, 'viewCount'],
-            },
-            'time': (
-                [youtube.parts.SNIPPET, 'publishedAt'],
-                {'format': formats.time.ISO8601}
-            ),
-            'length': (
-                [youtube.parts.details.CONTENT, 'duration'],
-                {'format': formats.time.ISO8601}
-            )
-        }
-        item_decoders = super().types.social.post.media
-        item_handlers = [item_each_fn]
-
-        if item_decode and item_expect != None:
-            item_hint = select.fromdict(o = item_hint, renamed_keys = item_expect)
-
         res = []
+
+        api_type = super().types.social.post.media
+        item_handler = super().item_handler(
+            item_hint = {
+                'id': youtube.parts.ID,
+                'stats': {
+                    'like': [youtube.parts.STATS, 'likeCount'],
+                    'comment': [youtube.parts.STATS, 'commentCount'],
+                    'view': [youtube.parts.STATS, 'viewCount'],
+                },
+                'time': (
+                    [youtube.parts.SNIPPET, 'publishedAt'],
+                    {'format': formats.time.ISO8601}
+                ),
+                'length': (
+                    [youtube.parts.details.CONTENT, 'duration'],
+                    {'format': formats.time.ISO8601}
+                )
+            },
+            item_decoders = api_type,
+            item_expect = want,
+            item_each_fns = [each_fn]
+        )
+
+        max_count = 50
 
         page_token = None
         curr_count = count
         while len(res) < count:
             try:
                 resp = super().get(
-                    url = 'youtube/v3/videos',
+                    url = 'youtube/v3/videos/',
                     type = http.dtypes.JSON,
                     query = {
                         'part': ','.join(parts or []),
@@ -94,17 +95,7 @@ class youtube(webapi):
                 self.log.warn('invalid entry')
             else:
                 res += items
-                for h in item_handlers:
-                    if h:
-                        for item in items:
-                            item_each_fn(
-                                item if not item_decode
-                                else webapi.handle(
-                                    item = item,
-                                    hint = item_hint,
-                                    decoders = item_decoders
-                                )
-                            )
+                item_handler.handle(items)
 
             page_token = resp.get('nextPageToken')
             if not page_token:

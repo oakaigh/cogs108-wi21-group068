@@ -29,29 +29,13 @@ logger = log('test')
 def tiktok_test():
     def item_each_fn(item):
         logger.dump(item)
-        '''
-        logger.dump({
-            'id': item.get('id'),
-            'time_published': decode.time(item.get('createTime')),
-            'stats': select.fromdict(
-                o = item.get('stats'),
-                renamed_keys = {
-                    'commentCount': 'comment',
-                    'diggCount': 'like',
-                    'playCount': 'view'
-                },
-                encoder = decode.integer
-            ),
-            'duration': decode.timedelta(item.get('video', {}).get('duration'))
-        })
-        '''
 
     test_tiktok = tiktok(
         modules = modules,
         headers = conf.get('headers')
     ).trending(
         count = count,
-        item_each_fn = item_each_fn
+        each_fn = item_each_fn
     )
 
     if log_resp: logger.dump(test_tiktok)
@@ -60,28 +44,6 @@ def tiktok_test():
 def youtube_test():
     def item_each_fn(item):
         logger.dump(item)
-        '''
-        logger.dump({
-            'id': item.get(youtube.parts.ID),
-            'time_published': decode.time(
-                    item.get(youtube.parts.SNIPPET, {}).get('publishedAt'),
-                    format = formats.time.ISO8601
-                ),
-            'stats': select.fromdict(
-                o = item.get(youtube.parts.STATS),
-                renamed_keys = {
-                    'commentCount': 'comment',
-                    'likeCount': 'like',
-                    'viewCount': 'view'
-                },
-                encoder = decode.integer
-            ),
-            'duration': decode.time(
-                    item.get(youtube.parts.details.CONTENT, {}).get('duration'),
-                    format = formats.time.ISO8601
-                )
-        })
-        '''
 
     test_youtube = youtube(
         modules = modules,
@@ -95,8 +57,8 @@ def youtube_test():
             youtube.parts.STATS,
             youtube.parts.details.CONTENT
         ],
-        item_expect = {'id': None},
-        item_each_fn = item_each_fn
+        want = {'id': None},
+        each_fn = item_each_fn
     )
 
     if log_resp: logger.dump(test_youtube)

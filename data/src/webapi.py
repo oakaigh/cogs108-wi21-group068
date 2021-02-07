@@ -67,38 +67,63 @@ class webapi:
             type = type
         )
 
-    @staticmethod
-    def handle(
-        item: dict,
-        hint: dict,
-        decoders: dict,
-        decoder_default = lambda x: x,
-        inplace = False
-    ) -> dict:
-        ret = hint if inplace else {}
+    class item_handler:
+        def __init__(self,
+            item_hint = None,
+            item_decoders = None,
+            item_expect = None,
+            item_each_fns = None
+        ):
+            self.item_hint = utils.select.fromdict(
+                                o = item_hint,
+                                renamed_keys = item_expect
+                            ) if item_expect else item_hint
+            self.item_decoders = item_decoders
+            self.item_each_fns = item_each_fns
+            pass
 
-        for k, v in hint.items():
-            if isinstance(v, dict):
-                ret[k] = webapi.handle(
-                    item = item,
-                    hint = v,
-                    decoders = decoders.get(k),
-                    decoder_default = decoder_default,
-                    inplace = inplace
-                )
-            else:
-                keys, args = None, None
-                if isinstance(v, tuple):
-                    keys, args = v
-                else:
-                    keys = v
+        def handle(self, items):
+            def decode(
+                item: dict,
+                hint: dict,
+                decoders: dict,
+                decoder_default = lambda x: x,
+                inplace = False
+            ) -> dict:
+                ret = hint if inplace else {}
+                for k, v in hint.items():
+                    if isinstance(v, dict):
+                        ret[k] = decode(
+                            item = item,
+                            hint = v,
+                            decoders = decoders.get(k),
+                            decoder_default = decoder_default,
+                            inplace = inplace
+                        )
+                    else:
+                        keys, args = None, None
+                        if isinstance(v, tuple):
+                            keys, args = v
+                        else:
+                            keys = v
 
-                ret[k] = ((decoders and decoders.get(k)) or decoder_default)(
-                    utils.select.descend(
-                        o = item,
-                        keys = keys if isinstance(keys, list) else [keys]
-                    ),
-                    **(args if args else {})
-                )
+                        ret[k] = ((decoders and decoders.get(k)) or decoder_default)(
+                            utils.select.descend(
+                                o = item,
+                                keys = keys if isinstance(keys, list) else [keys]
+                            ),
+                            **(args if args else {})
+                        )
+                return ret
 
-        return ret
+            for f in self.item_each_fns:
+                if f:
+                    for item in items:
+                        f(
+                            decode(
+                                item = item,
+                                hint = self.item_hint,
+                                decoders = self.item_decoders
+                            ) if self.item_hint and self.item_decoders
+                            else item
+                        )
