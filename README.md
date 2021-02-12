@@ -1,5 +1,5 @@
 # cogs108-wi21-jjkln068
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/COGS108/group068_wi21)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github)
 
 UCSD COGS108 Winter 2021    \
 Jared, Jimin, Kane, Lawrence, Nisha \
@@ -7,7 +7,7 @@ Group Number `068`
 
 ## Q & A
 ### How Do I Work on This Repo?
-- For **collaborative** editing (see changes in real time), open this repo in [Google Colab](https://colab.research.google.com/github/COGS108/group068_wi21) (GitHub authorization required).
+- ~~For **collaborative** editing (see changes in real time), open this repo in [Google Colab](https://colab.research.google.com/github) (GitHub authorization required). (For details, see: [Using Google Colab with GitHub](https://colab.research.google.com/github/googlecolab/colabtools/blob/master/notebooks/colab-github-demo.ipynb): [Loading Private Notebooks](https://colab.research.google.com/github/googlecolab/colabtools/blob/master/notebooks/colab-github-demo.ipynb#scrollTo=Rmai0dD30XzL) and [Saving Notebooks To GitHub](https://colab.research.google.com/github/googlecolab/colabtools/blob/master/notebooks/colab-github-demo.ipynb#scrollTo=8J3NBxtZpPcK))~~
 - For **asynchronous** editing, use [`git`](https://git-scm.com/) to `clone` this repo and `push` your changes.
 - For **contributing**, [fork](https://github.com/COGS108/group068_wi21/fork) this repo on GitHub and [create a pull request](https://github.com/COGS108/group068_wi21/compare) on behalf of your changes.
 
