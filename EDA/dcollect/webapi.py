@@ -22,6 +22,17 @@ class webapi:
                     'time': dtypes.time,
                     'length': dtypes.duration
                 }
+                creator = {
+                    'id': dtypes.any,
+                    'title': dtypes.string,
+                    'description': dtypes.string,
+                    'stats': {
+                        'follow': dtypes.integer,
+                        'view': dtypes.integer,
+                        'posts': dtypes.integer
+                    },
+                    'time': dtypes.time
+                }
 
     def __init__(self,
         base_url,

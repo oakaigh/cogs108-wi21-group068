@@ -1,3 +1,9 @@
+def isiter(o) -> bool:
+    try: iter(o)
+    except TypeError:
+        return False
+    return True
+
 class merge:
     @staticmethod
     def dictlist(dicts: list) -> dict:

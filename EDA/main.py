@@ -14,7 +14,7 @@ modules = {
 }
 
 count = 1
-log_resp = False
+log_resp = True
 
 
 logger = log('test')
@@ -33,7 +33,6 @@ def tiktok_test():
 
     if log_resp: logger.dump(test_tiktok)
 
-
 def youtube_test():
     def item_each_fn(item):
         logger.dump(item)
@@ -45,8 +44,32 @@ def youtube_test():
     )
 
     logger.info('testing: youtube trending')
-    test_youtube_trending = youtube_o.trending(
+    test_youtube_trending = youtube_o.video.trending(
         count = count,
+        parts = [
+            youtube.parts.ID,
+            youtube.parts.SNIPPET,
+            youtube.parts.STATS,
+            youtube.parts.details.CONTENT
+        ],
+        #want = {'id': None},
+        #drop = False,
+        each_fn = item_each_fn
+    )
+    if log_resp: logger.dump(test_youtube_trending)
+
+    logger.info('testing: youtube search')
+    test_youtube_search = youtube_o.video.search(
+        count = count,
+        keyword = '',
+        #want = {'id': None},
+        each_fn = item_each_fn
+    )
+    if log_resp: logger.dump(test_youtube_search)
+
+    logger.info('testing: youtube channels')
+    test_youtube_channel_info = youtube_o.channel.info(
+        id = ['UC8Zo5A8qICfNAzVGDY_VT7w', 'UC0VOyT2OCBKdQhF3BAbZ-1g'],
         parts = [
             youtube.parts.ID,
             youtube.parts.SNIPPET,
@@ -56,22 +79,25 @@ def youtube_test():
         #want = {'id': None},
         each_fn = item_each_fn
     )
-    if log_resp: logger.dump(test_youtube_trending)
+    if log_resp: logger.dump(test_youtube_channel_info)
 
-    logger.info('testing: youtube search')
-    test_youtube_search = youtube_o.search(
-        count = count,
-        keyword = '',
-        #want = {'id': None},
-        each_fn = item_each_fn
+def youtubei_test():
+    youtubei_o = youtubei(
+        modules = modules,
+        headers = conf.get('headers')
     )
-    if log_resp: logger.dump(test_youtube_search)
+
+    test_youtubei_ipr = youtubei_o.initial_player_response(
+        id = 'ur560pZKRfg'
+    )
+    if log_resp: logger.dump(test_youtubei_ipr)
 
 
 log.enable(level = log.levels.DEBUG)
 
 thread.start([
-    threading.Thread(target = tiktok_test),
-    threading.Thread(target = youtube_test)
+    #threading.Thread(target = tiktok_test),
+    threading.Thread(target = youtube_test),
+    #threading.Thread(target = youtubei_test)
 ])
 thread.join()

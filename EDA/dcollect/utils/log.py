@@ -1,6 +1,6 @@
 import sys
 import logging
-
+import pprint
 
 class log:
     class levels:
@@ -10,6 +10,8 @@ class log:
 
     def __init__(self, scope_id = None):
         self.id = scope_id
+        self.pprint = pprint.PrettyPrinter(indent = 4)
+        self.pprint._sorted = lambda x: x
 
     @staticmethod
     def enable(level = levels.INFO):
@@ -32,9 +34,15 @@ class log:
     def warn(self, string): return logging.warning(self.fmt(string))
     def debug(self, string): return logging.debug(self.fmt(string))
     def dump(self, obj, pretty = True):
-        self.debug(f'object dumped. len %d' % len(obj))
-        self.debug(obj if not pretty else
-                __import__('pprint').pformat(obj, indent = 4))
+        obj_len = None
+        try:
+            obj_len = len(obj)
+        except: pass
+        self.debug(f'object dumped. len {obj_len}')
+        self.debug(
+            obj if not pretty
+            else self.pprint.pformat(obj)
+        )
 
     def fatal(self, string):
         self.err(self.fmt(string))
