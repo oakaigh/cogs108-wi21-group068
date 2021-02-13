@@ -46,6 +46,7 @@ class youtube(webapi):
         query,
         count = 1,
         parts = [parts.SNIPPET],
+        drop = True,
         want = None,
         each_fn = None
     ) -> dict:
