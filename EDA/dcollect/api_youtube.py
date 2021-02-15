@@ -123,7 +123,6 @@ class youtube(webapi):
                     }, query)
                 )
             except Exception as e:
-                raise e # TODO
                 self.log.fatal(f'fatal error {e}. cannot proceed')
 
             items = resp.get('items')
