@@ -14,29 +14,29 @@ modules = {
 }
 
 count = 1
-log_resp = True
+log_resp = False
 
 
 logger = log('test')
 
-def tiktok_test():
-    def item_each_fn(item):
-        logger.dump(item)
+def item_each_fn(item):
+    logger.dump(item)
 
-    test_tiktok = tiktok(
+def res_fn(res):
+    if log_resp: logger.dump(res)
+
+
+def tiktok_test():
+    for item in tiktok(
         modules = modules,
         headers = conf.get('headers')
     ).trending(
         count = count,
-        each_fn = item_each_fn
-    )
-
-    if log_resp: logger.dump(test_tiktok)
+        on_result = res_fn
+    ):
+        item_each_fn(item)
 
 def youtube_test():
-    def item_each_fn(item):
-        logger.dump(item)
-
     youtube_o = youtube(
         modules = modules,
         key = 'AIzaSyBKsF33Y1McGDdBWemcfcTbVyJu23XDNIk',
@@ -44,7 +44,7 @@ def youtube_test():
     )
 
     logger.info('testing: youtube trending')
-    test_youtube_trending = youtube_o.video.trending(
+    for item in youtube_o.video.trending(
         count = count,
         parts = [
             youtube.parts.ID,
@@ -53,22 +53,30 @@ def youtube_test():
             youtube.parts.details.CONTENT
         ],
         #want = {'id': None},
-        #drop = False,
-        each_fn = item_each_fn
-    )
-    if log_resp: logger.dump(test_youtube_trending)
+        on_result = res_fn
+    ):
+        item_each_fn(item)
+
+    logger.info('testing: youtube trending (parts == None)')
+    for item in youtube_o.video.trending(
+        count = count,
+        parts = None,
+        #want = {'id': None},
+        on_result = res_fn
+    ):
+        item_each_fn(item)
 
     logger.info('testing: youtube search')
-    test_youtube_search = youtube_o.video.search(
+    for item in youtube_o.video.search(
         count = count,
         keyword = '',
         #want = {'id': None},
-        each_fn = item_each_fn
-    )
-    if log_resp: logger.dump(test_youtube_search)
+        on_result = res_fn
+    ):
+        item_each_fn(item)
 
     logger.info('testing: youtube channels')
-    test_youtube_channel_info = youtube_o.channel.info(
+    for item in youtube_o.channel.info(
         id = ['UC8Zo5A8qICfNAzVGDY_VT7w', 'UC0VOyT2OCBKdQhF3BAbZ-1g'],
         parts = [
             youtube.parts.ID,
@@ -77,9 +85,18 @@ def youtube_test():
             youtube.parts.details.CONTENT
         ],
         #want = {'id': None},
-        each_fn = item_each_fn
-    )
-    if log_resp: logger.dump(test_youtube_channel_info)
+        on_result = res_fn
+    ):
+        item_each_fn(item)
+
+    logger.info('testing: youtube channels (parts == None)')
+    for item in youtube_o.channel.info(
+        id = ['UC8Zo5A8qICfNAzVGDY_VT7w', 'UC0VOyT2OCBKdQhF3BAbZ-1g'],
+        #parts = None,
+        #want = {'id': None},
+        on_result = res_fn
+    ):
+        item_each_fn(item)
 
 def youtubei_test():
     youtubei_o = youtubei(
@@ -87,10 +104,18 @@ def youtubei_test():
         headers = conf.get('headers')
     )
 
-    test_youtubei_ipr = youtubei_o.initial_player_response(
+    logger.info('testing: youtube initial player response')
+    for item in youtubei_o.initial_player_response(
         id = 'ur560pZKRfg'
-    )
-    if log_resp: logger.dump(test_youtubei_ipr)
+    ):
+        item_each_fn(item)
+
+    logger.info('testing: youtube ad placements')
+    for item in youtubei_o.ad.placements(
+        id = 'ur560pZKRfg',
+        on_result = res_fn
+    ):
+        item_each_fn(item)
 
 
 log.enable(level = log.levels.DEBUG)

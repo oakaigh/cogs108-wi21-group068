@@ -2,7 +2,7 @@ from .webapi import webapi
 
 from .utils.log import log
 from .utils.decode import formats
-from .utils.http import http
+from .utils import http
 
 
 class tiktok(webapi):
@@ -24,9 +24,9 @@ class tiktok(webapi):
         min_cursor = 0, max_cursor = 0,
         region = None, language = None,
         want = None,
-        each_fn = None
+        on_result = None
     ) -> dict:
-        res = []
+        res = [] if on_result else None
 
         api_type = super().types.social.post.media
         item_handler = super().item_handler(
@@ -47,8 +47,7 @@ class tiktok(webapi):
                 )
             },
             item_decoders = api_type,
-            item_expect = want,
-            item_each_fns = [each_fn]
+            item_expect = want
         )
 
         max_count = 35
@@ -86,8 +85,9 @@ class tiktok(webapi):
             elif not isinstance(items, list):
                 self.log.warn('invalid entry')
             else:
-                res += items
-                item_handler.handle(items)
+                yield from item_handler.handle(items)
+                if not res == None:
+                    res += items
 
             if not resp.get('hasMore') and not first:
                 self.log.warn(f'less data returned than expected. '
@@ -103,4 +103,5 @@ class tiktok(webapi):
 
             first = False
 
-        return res[:count]
+        if on_result:
+            on_result(res[:count])

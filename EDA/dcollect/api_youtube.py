@@ -3,7 +3,7 @@ from .webapi import webapi
 from .utils import ds
 from .utils.log import log
 from .utils.decode import formats
-from .utils.http import http
+from .utils import http
 
 
 class youtube(webapi):
@@ -35,6 +35,36 @@ class youtube(webapi):
         CHANNEL = 'channel'
         PLAYLIST = 'playlist'
 
+    class utils:
+        @staticmethod
+        def multiparam(vars):
+            return ','.join(vars or [])
+
+        @staticmethod
+        def parse_id(id):
+            if isinstance(id, dict):
+                return id.get({
+                        f'youtube#{youtube.res_kinds.VIDEO}': 'videoId',
+                        f'youtube#{youtube.res_kinds.CHANNEL}': 'channelId',
+                        f'youtube#{youtube.res_kinds.PLAYLIST}': 'playlistId'
+                    }.get(id.get('kind'))
+                )
+            elif isinstance(id, str):
+                return id
+            return None
+
+        @staticmethod
+        def hint_parts(hint: dict):
+            parts = set()
+
+            for k, keys, args in    \
+                webapi.decoder.hint_traversal(hint = hint):
+                if len(keys) == 0:
+                    continue
+                parts.add(keys[0])
+
+            return parts
+
     def __init__(self, modules, key, query = None, headers = None):
         super().__init__(
             base_url = 'https://youtube.googleapis.com',
@@ -54,24 +84,28 @@ class youtube(webapi):
         item_hint,
         query,
         count,
-        parts = [parts.SNIPPET],
-        drop = True,
+        parts = None,
         want = None,
-        each_fn = None
+        on_result = None
     ) -> dict:
-        res = [] if not drop else None
+        res = [] if on_result else None
 
         max_count = 50
 
         api_url = f'youtube/v3/{kind}/'
         api_resp_type = http.dtypes.JSON
 
-        item_handler = super().item_handler(
+        item_handler = self.item_handler(
             item_hint = item_hint,
             item_decoders = api_type,
-            item_expect = want,
-            item_each_fns = [each_fn]
+            item_expect = want
         )
+
+        if parts == None:
+            parts = youtube.utils.hint_parts(
+                        item_handler.item_hint
+                    )
+        part_qstr = self.utils.multiparam(parts)
 
         res_count = 0
 
@@ -79,16 +113,17 @@ class youtube(webapi):
         curr_count = count
         while res_count < count:
             try:
-                resp = super().get(
+                resp = self.get(
                     url = api_url,
                     type = api_resp_type,
                     query = ds.merge.dicts({
-                        'part': ','.join(parts or []),
+                        'part': part_qstr,
                         'maxResults': curr_count,
                         'pageToken': page_token
                     }, query)
                 )
             except Exception as e:
+                raise e # TODO
                 self.log.fatal(f'fatal error {e}. cannot proceed')
 
             items = resp.get('items')
@@ -100,9 +135,9 @@ class youtube(webapi):
                 self.log.warn('invalid entry')
             else:
                 res_count += len(items)
-                if res:
+                yield from item_handler.handle(items)
+                if not res == None:
                     res += items
-                item_handler.handle(items)
 
             page_token = resp.get('nextPageToken')
             if not page_token:
@@ -114,22 +149,8 @@ class youtube(webapi):
 
             curr_count = curr_count - min(curr_count, max_count)
 
-        return res
-
-    @staticmethod
-    def id_handler(id):
-        if isinstance(id, dict):
-            return {
-                f'youtube#{youtube.res_kinds.VIDEO}':
-                    lambda: id.get('videoId'),
-                f'youtube#{youtube.res_kinds.CHANNEL}':
-                    lambda: id.get('channelId'),
-                f'youtube#{youtube.res_kinds.PLAYLIST}':
-                    lambda: id.get('playlistId')
-            }.get(id.get('kind'), lambda: None)()
-        elif isinstance(id, str):
-            return id
-        return None
+        if on_result:
+            on_result(res)
 
     class video:
         class chart:
@@ -143,7 +164,10 @@ class youtube(webapi):
             return self.main.listing(
                 api_type = self.main.types.media,
                 item_hint = {
-                    'id': (youtube.parts.ID, {'handler': self.main.id_handler}),
+                    'id': (
+                        youtube.parts.ID,
+                        {'handler': self.main.utils.parse_id}
+                    ),
                     'title': [youtube.parts.SNIPPET, 'title'],
                     'description': [youtube.parts.SNIPPET, 'description'],
                     'creator': {
@@ -171,13 +195,26 @@ class youtube(webapi):
             id = None,
             chart = chart.NONE,
             region = None, language = None,
+            want = {
+                'id':  None,
+                'title': None,
+                'description': None,
+                'creator': {'id': None},
+                'time': None,
+                'stats': {
+                    'like': None,
+                    'comment': None,
+                    'view': None,
+                },
+                'length': None
+            },
             **kwargs
         ):
             return self.listing(
                 kind = youtube.res_types.VIDEOS,
                 query = {
                     'chart': chart,
-                    'id': ','.join(id) if id else None,
+                    'id': self.main.utils.multiparam(id) if id else None,
                     'regionCode': region,
                     'hl': language
                 },
@@ -212,6 +249,13 @@ class youtube(webapi):
             keyword,
             count = 1,
             region = None, language = None,
+            want = {
+                'id': None,
+                'title': None,
+                'description': None,
+                'creator': {'id': None},
+                'time': None
+            },
             **kwargs
         ):
             return self.listing(
@@ -223,6 +267,7 @@ class youtube(webapi):
                 },
                 count = count,
                 parts = [youtube.parts.SNIPPET],
+                want = want,
                 **kwargs
             )
 
@@ -234,7 +279,10 @@ class youtube(webapi):
             return self.main.listing(
                 api_type = self.main.types.creator,
                 item_hint = {
-                    'id': (youtube.parts.ID, {'handler': self.main.id_handler}),
+                    'id': (
+                        youtube.parts.ID,
+                        {'handler': self.main.utils.parse_id}
+                    ),
                     'title': [youtube.parts.SNIPPET, 'title'],
                     'description': [youtube.parts.SNIPPET, 'description'],
                     'time': (
@@ -260,7 +308,7 @@ class youtube(webapi):
             return self.listing(
                 kind = youtube.res_types.CHANNELS,
                 query = {
-                    'id': ','.join(id) if id else None,
+                    'id': self.main.utils.multiparam(id) if id else None,
                     'forUsername': name,
                     'hl': language
                 },

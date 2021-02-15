@@ -1,8 +1,32 @@
+import collections
+
 def isiter(o) -> bool:
     try: iter(o)
     except TypeError:
         return False
     return True
+
+"""
+Update a nested dictionary or similar mapping.
+Stolen from https://stackoverflow.com/a/30655448/11934495
+"""
+def deep_update(
+    source,
+    overrides,
+    inplace = True,
+    itersect = False
+):
+    ret = source if inplace else {}
+
+    for key, value in overrides.items():
+        if itersect and not key in source:
+            continue
+        if isinstance(value, collections.Mapping) and value:
+            ret[key] = deep_update(source.get(key, {}), value)
+        else:
+            ret[key] = overrides[key]
+
+    return ret
 
 class merge:
     @staticmethod
