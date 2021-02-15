@@ -8,5 +8,5 @@ python3 -m pip install -r requirements.txt
 ```
 After you have everything installed, run the following command:
 ```
-python3 main.py
+python3 tests.py
 ```
