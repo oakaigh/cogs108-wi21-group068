@@ -27,10 +27,12 @@ def res_fn(res):
 
 
 def tiktok_test():
-    for item in tiktok(
+    tiktok_o = tiktok(
         modules = modules,
         headers = conf.get('headers')
-    ).trending(
+    )
+
+    for item in tiktok_o.video.trending(
         count = count,
         on_result = res_fn
     ):
@@ -121,8 +123,8 @@ def youtubei_test():
 log.enable(level = log.levels.DEBUG)
 
 thread.start([
-    #threading.Thread(target = tiktok_test),
-    threading.Thread(target = youtube_test),
+    threading.Thread(target = tiktok_test),
+    #threading.Thread(target = youtube_test),
     #threading.Thread(target = youtubei_test)
 ])
 thread.join()

@@ -7,31 +7,33 @@ class webapi:
     class types:
         class social: # social platforms
             class post:
-                media = {
-                    'id': dtypes.any,
-                    'title': dtypes.string,
-                    'description': dtypes.string,
-                    'creator': {
-                        'id': dtypes.any
-                    },
-                    'stats': {
-                        'like': dtypes.integer,
-                        'comment': dtypes.integer,
-                        'view': dtypes.integer
-                    },
-                    'time': dtypes.time,
-                    'length': dtypes.duration
-                }
                 creator = {
                     'id': dtypes.any,
                     'title': dtypes.string,
                     'description': dtypes.string,
                     'stats': {
-                        'follow': dtypes.integer,
+                        'follower': dtypes.integer,
+                        'following': dtypes.integer,
+                        'like': dtypes.integer,
                         'view': dtypes.integer,
-                        'posts': dtypes.integer
+                        'post': dtypes.integer
                     },
                     'time': dtypes.time
+                }
+                media = {
+                    'id': dtypes.any,
+                    'title': dtypes.string,
+                    'description': dtypes.string,
+                    'stats': {
+                        'like': dtypes.integer,
+                        'dislike': dtypes.integer,
+                        'comment': dtypes.integer,
+                        'view': dtypes.integer,
+                        'share': dtypes.integer
+                    },
+                    'time': dtypes.time,
+                    'length': dtypes.duration,
+                    'creator': creator
                 }
 
     def __init__(self,

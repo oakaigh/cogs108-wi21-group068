@@ -178,6 +178,7 @@ class youtube(webapi):
                     ),
                     'stats': {
                         'like': [youtube.parts.STATS, 'likeCount'],
+                        'dislike': [youtube.parts.STATS, 'dislikeCount'],
                         'comment': [youtube.parts.STATS, 'commentCount'],
                         'view': [youtube.parts.STATS, 'viewCount'],
                     },
@@ -289,9 +290,9 @@ class youtube(webapi):
                         {'format': formats.time.ISO8601}
                     ),
                     'stats': {
-                        'follow': [youtube.parts.STATS, 'subscriberCount'],
+                        'follower': [youtube.parts.STATS, 'subscriberCount'],
                         'view': [youtube.parts.STATS, 'viewCount'],
-                        'posts': [youtube.parts.STATS, 'videoCount'],
+                        'post': [youtube.parts.STATS, 'videoCount']
                     }
                 },
                 **kwargs
@@ -302,6 +303,17 @@ class youtube(webapi):
             id = None,
             name = None,
             language = None,
+            want = {
+                'id': None,
+                'title': None,
+                'description': None,
+                'time': None,
+                'stats': {
+                    'follower': None,
+                    'view': None,
+                    'post': None
+                }
+            },
             **kwargs
         ):
             return self.listing(

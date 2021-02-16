@@ -6,11 +6,11 @@ from .utils.decode import formats
 from .utils import http
 from .utils.decode import dtypes
 
+import quickjs
+import lxml.html
+
 
 class youtubei(webapi):
-    import quickjs
-    import lxml.html
-
     class types:
         class youtubei:
             ad = {
@@ -34,12 +34,10 @@ class youtubei(webapi):
 
         self.ad = self.ad(self)
 
-    def initial_player_response(self, id, throttle = 50) -> dict:
+    def initial_player_response(self, id) -> dict:
         o_name = 'ytInitialPlayerResponse'
 
         id = id if isinstance(id, list) else [id]
-
-        # TODO throttle
 
         reqs = []
 
@@ -59,14 +57,14 @@ class youtubei(webapi):
         resps = super().send(reqs)
 
         for resp in resps:
-            root = self.lxml.html.document_fromstring(resp)
+            root = lxml.html.document_fromstring(resp)
             scripts = root.xpath(
                 f'.//script[contains(text(),"var {o_name}")]'
             )
 
             if len(scripts) > 0:
                 try:
-                    yield self.quickjs.Function("f",
+                    yield quickjs.Function("f",
                         """
                         function f() {
                             try { %s; } catch (e) {;}
@@ -88,7 +86,6 @@ class youtubei(webapi):
         def __init__(self, main):
             self.main = main
 
-        # TODO
         def placements(self, id, want = None, on_result = None) -> dict:
             res = [] if on_result else None
 
@@ -133,7 +130,6 @@ class youtubei(webapi):
                     item_expect = want
                 )
 
-                # TODO
                 yield {
                     'id': resp_id,
                     'ads': list(item_handler.handle(items))
