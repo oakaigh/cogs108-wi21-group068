@@ -27,7 +27,7 @@ def res_fn(res):
 
 
 def tiktok_test():
-    tiktok_o = tiktok_v2(
+    tiktok_o = tiktok.api(
         modules = modules,
         headers = conf.get('headers')
     )
@@ -39,7 +39,7 @@ def tiktok_test():
         item_each_fn(item)
 
 def youtube_test():
-    youtube_o = youtube_v2(
+    youtube_o = youtube.api(
         modules = modules,
         key = 'AIzaSyBKsF33Y1McGDdBWemcfcTbVyJu23XDNIk',
         headers = conf.get('headers')
@@ -49,10 +49,10 @@ def youtube_test():
     for item in youtube_o.video.trending(
         count = count,
         parts = [
-            youtube.parts.ID,
-            youtube.parts.SNIPPET,
-            youtube.parts.STATS,
-            youtube.parts.details.CONTENT
+            youtube.res_parts.ID,
+            youtube.res_parts.SNIPPET,
+            youtube.res_parts.STATS,
+            youtube.res_parts.details.CONTENT
         ],
         #want = {'id': None},
         on_result = res_fn
@@ -81,10 +81,10 @@ def youtube_test():
     for item in youtube_o.channel.info(
         id = ['UC8Zo5A8qICfNAzVGDY_VT7w', 'UC0VOyT2OCBKdQhF3BAbZ-1g'],
         parts = [
-            youtube.parts.ID,
-            youtube.parts.SNIPPET,
-            youtube.parts.STATS,
-            youtube.parts.details.CONTENT
+            youtube.res_parts.ID,
+            youtube.res_parts.SNIPPET,
+            youtube.res_parts.STATS,
+            youtube.res_parts.details.CONTENT
         ],
         #want = {'id': None},
         on_result = res_fn
@@ -101,7 +101,7 @@ def youtube_test():
         item_each_fn(item)
 
 def youtubei_test():
-    youtubei_o = youtubei_v2(
+    youtubei_o = youtubei.api(
         modules = modules,
         headers = conf.get('headers')
     )

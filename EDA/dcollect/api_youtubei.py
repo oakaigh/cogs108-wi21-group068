@@ -1,27 +1,31 @@
-from .webapi import webapi
-
 from .utils import ds
 from .utils.log import log
-from .utils.decode import formats
 from .utils import http
 from .utils.decode import dtypes
+
+from . import restful
 
 import quickjs
 import lxml.html
 
 
-class youtubei(webapi):
-    class types:
-        class youtubei:
-            ad = {
-                'id': dtypes.any,
-                'kind': dtypes.string,
-                'offset': {
-                    'start': dtypes.duration,
-                    'end': dtypes.duration
+class types:
+    class ad(restful.types.json.object):
+        def __new__(cls, data, directives):
+            return super().__new__(cls,
+                data = data,
+                directives = directives,
+                classes = {
+                    'id': restful.types.string,
+                    'kind': restful.types.string,
+                    'offset': {
+                        'start': restful.types.time.relative,
+                        'end': restful.types.time.relative
+                    }
                 }
-            }
+            )
 
+class api(restful.api):
     def __init__(self, modules, query = None, headers = None):
         super().__init__(
             base_url = 'https://www.youtube.com',
@@ -93,6 +97,41 @@ class youtubei(webapi):
             if resps is None:
                 return None
 
+            dutils = restful.utils.directives
+
+            path_ad_base = ['adPlacementRenderer']
+            path_ad_conf = path_ad_base + [
+                'config', 'adPlacementConfig'
+            ]
+
+            item_type = types.ad
+            item_directives = dutils.reduce(
+                directives = {
+                    'kind': path_ad_conf + ['kind'],
+                    'offset': {
+                        'start': (
+                            path_ad_conf + [
+                                'adTimeOffset',
+                                'offsetStartMilliseconds'
+                            ],
+                            {'format': restful.types.time.formats.UNIX}
+                        ),
+                        'end': (
+                            path_ad_conf + [
+                                'adTimeOffset',
+                                'offsetEndMilliseconds'
+                            ],
+                            {'format': restful.types.time.formats.UNIX}
+                        )
+                    }
+                },
+                want = want
+            )
+            array_type = restful.types.json.array(
+                dutils.compile(item_type, item_directives),
+                iterator = False
+            )
+
             for resp in resps:
                 resp_id = ds.select.descend(resp, ['videoDetails', 'videoId'])
 
@@ -101,38 +140,9 @@ class youtubei(webapi):
                     yield None
                     continue
 
-                path_ad_base = ['adPlacementRenderer']
-                path_ad_conf = path_ad_base + [
-                    'config', 'adPlacementConfig'
-                ]
-
-                item_handler = self.main.item_handler(
-                    item_hint = {
-                        'kind': path_ad_conf + ['kind'],
-                        'offset': {
-                            'start': (
-                                path_ad_conf + [
-                                    'adTimeOffset',
-                                    'offsetStartMilliseconds'
-                                ],
-                                {'format': formats.time.UNIX}
-                            ),
-                            'end': (
-                                path_ad_conf + [
-                                    'adTimeOffset',
-                                    'offsetEndMilliseconds'
-                                ],
-                                {'format': formats.time.UNIX}
-                            )
-                        }
-                    },
-                    item_decoders = self.main.types.youtubei.ad,
-                    item_expect = want
-                )
-
                 yield {
                     'id': resp_id,
-                    'ads': list(item_handler.handle(items))
+                    'ads': array_type.__call__(items)
                 }
                 if not res == None:
                     res += items

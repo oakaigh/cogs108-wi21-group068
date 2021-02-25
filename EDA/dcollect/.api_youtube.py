@@ -1,70 +1,70 @@
+from .webapi import webapi
+
 from .utils import ds
 from .utils.log import log
+from .utils.decode import formats
 from .utils import http
-from . import restful
 
 
-types = restful.api.types.social
+class youtube(webapi):
+    types = webapi.types.social.post
 
-class res_parts:
-    class details:
-        CONTENT = 'contentDetails'
-        FILE = 'fileDetails'
-        LIVE = 'liveStreamingDetails'
-        PROC = 'processingDetails'
-        REC = 'recordingDetails'
-        TOPIC = 'topicDetails'
-    ID = 'id'
-    LOCAL = 'localizations'
-    PLAYER = 'player'
-    SNIPPET = 'snippet'
-    STATS = 'statistics'
-    STATUS = 'status'
-    SUGGEST = 'suggestions'
+    class parts:
+        class details:
+            CONTENT = 'contentDetails'
+            FILE = 'fileDetails'
+            LIVE = 'liveStreamingDetails'
+            PROC = 'processingDetails'
+            REC = 'recordingDetails'
+            TOPIC = 'topicDetails'
+        ID = 'id'
+        LOCAL = 'localizations'
+        PLAYER = 'player'
+        SNIPPET = 'snippet'
+        STATS = 'statistics'
+        STATUS = 'status'
+        SUGGEST = 'suggestions'
 
-class res_types:
-    VIDEOS = 'videos'
-    SEARCH = 'search'
-    CHANNELS = 'channels'
+    class res_types:
+        VIDEOS = 'videos'
+        SEARCH = 'search'
+        CHANNELS = 'channels'
 
-class res_kinds:
-    VIDEO = 'video'
-    CHANNEL = 'channel'
-    PLAYLIST = 'playlist'
+    class res_kinds:
+        VIDEO = 'video'
+        CHANNEL = 'channel'
+        PLAYLIST = 'playlist'
 
-class utils:
-    @staticmethod
-    def multiparam(vars):
-        return ','.join(vars or [])
+    class utils:
+        @staticmethod
+        def multiparam(vars):
+            return ','.join(vars or [])
 
-    # TODO!!!
-    @staticmethod
-    def hint_parts(hint: dict):
-        parts = set()
-
-        for k, keys, args, filter_fn in    \
-            restful.utils.directives.traversal(hint):
-            if not keys:
-                continue
-            parts.add(keys[0])
-
-        return parts
-
-class filters:
-    class uid:
-        def __new__(cls, data):
-            if isinstance(data, dict):
-                return data.get({
-                        f'youtube#{res_kinds.VIDEO}': 'videoId',
-                        f'youtube#{res_kinds.CHANNEL}': 'channelId',
-                        f'youtube#{res_kinds.PLAYLIST}': 'playlistId'
-                    }.get(data.get('kind'))
+        @staticmethod
+        def parse_id(id):
+            if isinstance(id, dict):
+                return id.get({
+                        f'youtube#{youtube.res_kinds.VIDEO}': 'videoId',
+                        f'youtube#{youtube.res_kinds.CHANNEL}': 'channelId',
+                        f'youtube#{youtube.res_kinds.PLAYLIST}': 'playlistId'
+                    }.get(id.get('kind'))
                 )
-            elif isinstance(data, str):
-                return data
+            elif isinstance(id, str):
+                return id
             return None
 
-class youtube(restful.api):
+        @staticmethod
+        def hint_parts(hint: dict):
+            parts = set()
+
+            for k, keys, args in    \
+                webapi.decoder.hint_traversal(hint = hint):
+                if len(keys) == 0:
+                    continue
+                parts.add(keys[0])
+
+            return parts
+
     def __init__(self, modules, key, query = None, headers = None):
         super().__init__(
             base_url = 'https://youtube.googleapis.com',
@@ -79,15 +79,13 @@ class youtube(restful.api):
         self.channel = self.channel(self)
 
     def listing(self,
-        item_type, # TODO isinstance(restful.types.json.object)
-        item_directives,
-        item_expect,
-
         kind,
-        count,
-        parts,
-
+        api_type,
+        item_hint,
         query,
+        count,
+        parts = None,
+        want = None,
         on_result = None
     ) -> dict:
         res = [] if on_result else None
@@ -97,17 +95,17 @@ class youtube(restful.api):
         api_url = f'youtube/v3/{kind}/'
         api_resp_type = http.dtypes.JSON
 
-        dutils = restful.utils.directives
-        item_directives = dutils.reduce(item_directives, item_expect)
-        query_default = {
-            'part': utils.multiparam(
-                        parts or utils.hint_parts(item_directives)
-                    )
-        }
-        array_type = restful.types.json.array(
-            dutils.compile(item_type, item_directives),
-            iterator = True
+        item_handler = self.item_handler(
+            item_hint = item_hint,
+            item_decoders = api_type,
+            item_expect = want
         )
+
+        if parts == None:
+            parts = youtube.utils.hint_parts(
+                        item_handler.item_hint
+                    )
+        part_qstr = self.utils.multiparam(parts)
 
         res_count = 0
 
@@ -119,9 +117,10 @@ class youtube(restful.api):
                     url = api_url,
                     type = api_resp_type,
                     query = ds.merge.dicts({
+                        'part': part_qstr,
                         'maxResults': curr_count,
                         'pageToken': page_token
-                    }, query, query_default)
+                    }, query)
                 )
             except Exception as e:
                 self.log.fatal(f'fatal error {e}. cannot proceed')
@@ -135,7 +134,7 @@ class youtube(restful.api):
                 self.log.warn('invalid entry')
             else:
                 res_count += len(items)
-                yield from array_type.__call__(items)
+                yield from item_handler.handle(items)
                 if not res == None:
                     res += items
 
@@ -160,39 +159,35 @@ class youtube(restful.api):
         def __init__(self, main):
             self.main = main
 
-        def listing(self, want = None, parts = None, **kwargs):
+        def listing(self, **kwargs):
             return self.main.listing(
-                item_type = types.post,
-                item_directives = {
-                    'id': (res_parts.ID, {'t': filters.uid}),
-                    'title': [res_parts.SNIPPET, 'title'],
-                    'description': [res_parts.SNIPPET, 'description'],
-                    'creator': (
-                        res_parts.SNIPPET,
-                        {'directives': {'id': 'channelId'}}
+                api_type = self.main.types.media,
+                item_hint = {
+                    'id': (
+                        youtube.parts.ID,
+                        {'handler': self.main.utils.parse_id}
                     ),
+                    'title': [youtube.parts.SNIPPET, 'title'],
+                    'description': [youtube.parts.SNIPPET, 'description'],
+                    'creator': {
+                        'id': [youtube.parts.SNIPPET, 'channelId']
+                    },
                     'time': (
-                        [res_parts.SNIPPET, 'publishedAt'],
-                        {'format': restful.types.time.formats.ISO8601}
+                        [youtube.parts.SNIPPET, 'publishedAt'],
+                        {'format': formats.time.ISO8601}
                     ),
                     'stats': {
-                        'like': [res_parts.STATS, 'likeCount'],
-                        'dislike': [res_parts.STATS, 'dislikeCount'],
-                        'comment': [res_parts.STATS, 'commentCount'],
-                        'view': [res_parts.STATS, 'viewCount'],
+                        'like': [youtube.parts.STATS, 'likeCount'],
+                        'dislike': [youtube.parts.STATS, 'dislikeCount'],
+                        'comment': [youtube.parts.STATS, 'commentCount'],
+                        'view': [youtube.parts.STATS, 'viewCount'],
                     },
                     'length': (
-                        [res_parts.details.CONTENT, 'duration'],
-                        {'format': restful.types.time.formats.ISO8601}
+                        [youtube.parts.details.CONTENT, 'duration'],
+                        {'format': formats.time.ISO8601}
                     ),
-                    'tags': [res_parts.SNIPPET, 'tags'],
-                    'video': (
-                        res_parts.details.CONTENT,
-                        {'directives': {'quality': 'definition'}}
-                    )
+                    'tags': [youtube.parts.SNIPPET, 'tags']
                 },
-                item_expect = want,
-                parts = parts,
                 **kwargs
             )
 
@@ -205,7 +200,7 @@ class youtube(restful.api):
                 'id':  None,
                 'title': None,
                 'description': None,
-                'creator': None,
+                'creator': {'id': None},
                 'time': None,
                 'stats': None,
                 'length': None,
@@ -215,10 +210,10 @@ class youtube(restful.api):
             **kwargs
         ):
             return self.listing(
-                kind = res_types.VIDEOS,
+                kind = youtube.res_types.VIDEOS,
                 query = {
                     'chart': chart,
-                    'id': utils.multiparam(id) if id else None,
+                    'id': self.main.utils.multiparam(id) if id else None,
                     'regionCode': region,
                     'hl': language
                 },
@@ -265,14 +260,14 @@ class youtube(restful.api):
             **kwargs
         ):
             return self.listing(
-                kind = res_types.SEARCH,
+                kind = youtube.res_types.SEARCH,
                 query = {
                     'q': keyword,
                     'regionCode': region,
                     'relevanceLanguage': language
                 },
                 count = count,
-                parts = [res_parts.SNIPPET],
+                parts = [youtube.parts.SNIPPET],
                 want = want,
                 **kwargs
             )
@@ -281,25 +276,26 @@ class youtube(restful.api):
         def __init__(self, main):
             self.main = main
 
-        def listing(self, want = None, parts = None, **kwargs):
+        def listing(self, **kwargs):
             return self.main.listing(
-                item_type = types.creator,
-                item_directives = {
-                    'id': (res_parts.ID, {'t': filters.uid}),
-                    'title': [res_parts.SNIPPET, 'title'],
-                    'description': [res_parts.SNIPPET, 'description'],
+                api_type = self.main.types.creator,
+                item_hint = {
+                    'id': (
+                        youtube.parts.ID,
+                        {'handler': self.main.utils.parse_id}
+                    ),
+                    'title': [youtube.parts.SNIPPET, 'title'],
+                    'description': [youtube.parts.SNIPPET, 'description'],
                     'time': (
-                        [res_parts.SNIPPET, 'publishedAt'],
-                        {'format': restful.types.time.formats.ISO8601}
+                        [youtube.parts.SNIPPET, 'publishedAt'],
+                        {'format': formats.time.ISO8601}
                     ),
                     'stats': {
-                        'follower': [res_parts.STATS, 'subscriberCount'],
-                        'view': [res_parts.STATS, 'viewCount'],
-                        'post': [res_parts.STATS, 'videoCount']
+                        'follower': [youtube.parts.STATS, 'subscriberCount'],
+                        'view': [youtube.parts.STATS, 'viewCount'],
+                        'post': [youtube.parts.STATS, 'videoCount']
                     }
                 },
-                item_expect = want,
-                parts = parts,
                 **kwargs
             )
 
@@ -318,9 +314,9 @@ class youtube(restful.api):
             **kwargs
         ):
             return self.listing(
-                kind = res_types.CHANNELS,
+                kind = youtube.res_types.CHANNELS,
                 query = {
-                    'id': utils.multiparam(id) if id else None,
+                    'id': self.main.utils.multiparam(id) if id else None,
                     'forUsername': name,
                     'hl': language
                 },
