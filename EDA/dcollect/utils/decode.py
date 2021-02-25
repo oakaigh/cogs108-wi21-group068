@@ -58,8 +58,18 @@ class decode:
     def any(data, handler = None):
         return handler(data) if handler else data
 
+    @staticmethod
+    def array(data, handler = None):
+        if decode.unexpected(data, list):
+            return None
+        ret = []
+        for el in data:
+            ret.append(any(el, handler = handler))
+        return ret
+
 class dtypes:
     any = decode.any
+    array = decode.array
     string = None
     raw = string
     integer = decode.integer

@@ -1,19 +1,28 @@
-import requests
-from .utils.http import http
+from .utils import http
+import grequests
 
 
-class fasthttp(http):
+class fasthttp(http.dispatch):
     def __init__(self, conf = None):
-        self._ = requests.Session()
+        self._ = grequests.Session()
 
-    def get(self, url, type = http.dtypes.TEXT, query = None, headers = None):
-        res = self._.get(url = url, params = query, headers = headers)
-        if not res:
-            raise NotImplementedError
+    def sendall(self, requests):
+        greqs = []
 
-        return {
-            http.dtypes.RAW: lambda: res,
-            http.dtypes.STREAM: lambda: res.content,
-            http.dtypes.TEXT: lambda: res.text,
-            http.dtypes.JSON: lambda: res.json()
-        }.get(type, lambda: None)()
+        for req in requests:
+            greqs.append(grequests.request(
+                method = req.method,
+                url = req.url,
+                params = req.query,
+                headers = req.headers,
+                session = self._
+            ))
+
+        resps = grequests.imap(greqs)
+        for req, resp in zip(requests, resps):
+            yield {
+                http.dtypes.RAW: lambda: resp,
+                http.dtypes.STREAM: lambda: resp.content,
+                http.dtypes.TEXT: lambda: resp.text,
+                http.dtypes.JSON: lambda: resp.json()
+            }.get(req.type, lambda: None)()

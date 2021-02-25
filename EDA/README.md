@@ -6,7 +6,7 @@ Before you start, make sure you have the dependencies required to run this proje
 ```
 python3 -m pip install -r requirements.txt
 ```
-After you have everything installed, run the following command:
+After you have everything installed, run:
 ```
-python3 main.py
+python3 tests.py
 ```
