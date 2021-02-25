@@ -14,15 +14,23 @@ def deep_update(
     source,
     overrides,
     inplace = True,
-    itersect = False
+    intersect = False
 ):
+    if source == None:
+        return source if inplace else overrides.copy()
+
     ret = source if inplace else {}
 
     for key, value in overrides.items():
-        if itersect and not key in source:
+        if intersect and not key in source:
             continue
         if isinstance(value, collections.Mapping) and value:
-            ret[key] = deep_update(source.get(key, {}), value)
+            ret[key] = deep_update(
+                source = source.get(key, {}),
+                overrides = value,
+                inplace = inplace,
+                intersect = intersect
+            )
         else:
             ret[key] = overrides[key]
 

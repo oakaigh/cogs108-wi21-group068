@@ -1,17 +1,22 @@
-from .webapi import webapi
-
 from .utils import ds
 from .utils.log import log
-from .utils.decode import formats
 from .utils import http
+from . import restful
 
 
-class tiktok(webapi):
-    types = webapi.types.social.post
+types = restful.api.types.social
 
-    class kinds:
-        TRENDING = 12
+class kinds:
+    TRENDING = 12
 
+class filters:
+    class tag:
+        def __new__(cls, data):
+            if isinstance(data, dict):
+                return data.get('hashtagName')
+            return None
+
+class tiktok(restful.api):
     def __init__(self, modules, query = None, headers = None):
         super().__init__(
             base_url = 'https://www.tiktok.com',
@@ -29,12 +34,14 @@ class tiktok(webapi):
     Reference https://github.com/davidteather/TikTok-Api
     '''
     def listing(self,
+        item_type, # TODO isinstance(restful.types.json.object)
+        item_directives,
+        item_expect,
+
         kind,
-        api_type,
-        item_hint,
-        query,
         count,
-        want = None,
+
+        query,
         on_result = None
     ):
         res = [] if on_result else None
@@ -44,10 +51,11 @@ class tiktok(webapi):
         api_url = 'api/item_list/'
         api_resp_type = http.dtypes.JSON
 
-        item_handler = super().item_handler(
-            item_hint = item_hint,
-            item_decoders = api_type,
-            item_expect = want
+        dutils = restful.utils.directives
+        item_directives = dutils.reduce(item_directives, item_expect)
+        array_type = restful.types.json.array(
+            dutils.compile(item_type, item_directives),
+            iterator = True
         )
 
         res_count = 0
@@ -83,7 +91,7 @@ class tiktok(webapi):
                 self.log.warn('invalid entry')
             else:
                 res_count += len(items)
-                yield from item_handler.handle(items)
+                yield from array_type.__call__(items)
                 if not res == None:
                     res += items
 
@@ -111,26 +119,30 @@ class tiktok(webapi):
         def trending(self,
             count = 1,
             region = None, language = None,
+            want = None,
             **kwargs
         ) -> dict:
             return self.main.listing(
-                kind = self.main.kinds.TRENDING,
-                api_type = self.main.types.media,
-                item_hint = {
+                item_type = types.post,
+                item_directives = {
                     'id': 'id',
                     'description': 'desc',
-                    'creator': {
-                        'id': ['author', 'id'],
-                        'title': ['author', 'nickname'],
-                        'description': ['author', 'signature'],
-                        'stats': {
-                            'follower': ['authorStats', 'followerCount'],
-                            'following': ['authorStats', 'followingCount'],
-                            'like': ['authorStats', 'diggCount'],
-                            'view': ['authorStats', 'heartCount'],
-                            'post': ['authorStats', 'videoCount']
+                    'creator': (
+                        None, {
+                            'directives': {
+                                'id': ['author', 'id'],
+                                'title': ['author', 'nickname'],
+                                'description': ['author', 'signature'],
+                                'stats': {
+                                    'follower': ['authorStats', 'followerCount'],
+                                    'following': ['authorStats', 'followingCount'],
+                                    'like': ['authorStats', 'diggCount'],
+                                    'view': ['authorStats', 'heartCount'],
+                                    'post': ['authorStats', 'videoCount']
+                                }
+                            },
                         }
-                    },
+                    ),
                     'stats': {
                         'like': ['stats', 'diggCount'],
                         'comment': ['stats', 'commentCount'],
@@ -139,17 +151,25 @@ class tiktok(webapi):
                     },
                     'time': (
                         'createTime',
-                        {'format': formats.time.UNIX}
+                        {'format': restful.types.time.formats.UNIX}
                     ),
                     'length': (
                         ['video', 'duration'],
-                        {'format': formats.time.UNIX}
+                        {'format': restful.types.time.formats.UNIX}
                     ),
                     'tags': (
-                        ['textExtra'],
-                        {'handler': lambda x: ds.select.descend(x, ['hashtagName'])}
+                        'textExtra', {'t': filters.tag}
+                    ),
+                    'video': (
+                        None, {
+                            'directives': {
+                                'quality': ['video', 'ratio']
+                            }
+                        }
                     )
                 },
+                item_expect = want,
+                kind = kinds.TRENDING,
                 query = {
                     'region': region,
                     'priority_region': region,

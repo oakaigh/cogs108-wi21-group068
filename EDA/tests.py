@@ -27,7 +27,7 @@ def res_fn(res):
 
 
 def tiktok_test():
-    tiktok_o = tiktok(
+    tiktok_o = tiktok_v2(
         modules = modules,
         headers = conf.get('headers')
     )
@@ -39,7 +39,7 @@ def tiktok_test():
         item_each_fn(item)
 
 def youtube_test():
-    youtube_o = youtube(
+    youtube_o = youtube_v2(
         modules = modules,
         key = 'AIzaSyBKsF33Y1McGDdBWemcfcTbVyJu23XDNIk',
         headers = conf.get('headers')
@@ -63,7 +63,7 @@ def youtube_test():
     for item in youtube_o.video.trending(
         count = count,
         parts = None,
-        #want = {'id': None},
+        want = {'id': None},
         on_result = res_fn
     ):
         item_each_fn(item)
@@ -101,16 +101,18 @@ def youtube_test():
         item_each_fn(item)
 
 def youtubei_test():
-    youtubei_o = youtubei(
+    youtubei_o = youtubei_v2(
         modules = modules,
         headers = conf.get('headers')
     )
 
+    '''
     logger.info('testing: youtube initial player response')
     for item in youtubei_o.initial_player_response(
         id = 'ur560pZKRfg'
     ):
         item_each_fn(item)
+    '''
 
     logger.info('testing: youtube ad placements')
     for item in youtubei_o.ad.placements(
@@ -124,7 +126,7 @@ log.enable(level = log.levels.DEBUG)
 
 thread.start([
     threading.Thread(target = tiktok_test),
-    #threading.Thread(target = youtube_test),
-    #threading.Thread(target = youtubei_test)
+    threading.Thread(target = youtube_test),
+    threading.Thread(target = youtubei_test)
 ])
 thread.join()

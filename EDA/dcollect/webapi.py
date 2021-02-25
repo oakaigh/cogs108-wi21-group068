@@ -7,6 +7,10 @@ class webapi:
     class types:
         class social: # social platforms
             class post:
+                tag = dtypes.string
+                video = {
+                    'quality': dtypes.any
+                }
                 creator = {
                     'id': dtypes.any,
                     'title': dtypes.string,
@@ -24,6 +28,7 @@ class webapi:
                     'id': dtypes.any,
                     'title': dtypes.string,
                     'description': dtypes.string,
+                    'creator': creator,
                     'stats': {
                         'like': dtypes.integer,
                         'dislike': dtypes.integer,
@@ -33,7 +38,8 @@ class webapi:
                     },
                     'time': dtypes.time,
                     'length': dtypes.duration,
-                    'creator': creator
+                    'tags': dtypes.array, # TODO
+                    'video': video
                 }
 
     def __init__(self,
@@ -150,7 +156,7 @@ class webapi:
                                 source = item_expect,
                                 overrides = item_hint,
                                 inplace = False,
-                                itersect = True
+                                intersect = True
                             ) if item_expect else item_hint
             self.item_decoders = item_decoders
 
