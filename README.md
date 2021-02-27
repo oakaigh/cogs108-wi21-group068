@@ -2,7 +2,7 @@
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github)
 
 UCSD COGS108 Winter 2021    \
-Jared, Jimin, Kane, Lawrence, Nisha \
+Jared, Jimin, Kane, Laurence, Nisha \
 Group Number `068`
 
 ## Q & A
