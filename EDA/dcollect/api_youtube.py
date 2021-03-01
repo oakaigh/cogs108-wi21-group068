@@ -52,7 +52,7 @@ class utils:
         return parts
 
 class types(restful.api.types.social):
-    class uid:
+    class uid(restful.types.string):
         def __new__(cls, data):
             if isinstance(data, dict):
                 return data.get({
@@ -66,7 +66,10 @@ class types(restful.api.types.social):
             return None
 
 class api(restful.api):
-    def __init__(self, modules, key, query = None, headers = None):
+    def __init__(self,
+        modules, key,
+        query = None, headers = None
+    ):
         super().__init__(
             base_url = 'https://youtube.googleapis.com',
             query = ds.merge.dicts({'key': key}, query),
@@ -78,6 +81,47 @@ class api(restful.api):
 
         self.video = self.video(self)
         self.channel = self.channel(self)
+
+        self.types = self.types(self)
+
+    class types:
+        def __init__(self, main):
+            self.category = self._category(main)
+
+        @staticmethod
+        def _category(main):
+            class _(restful.types.string):
+                all = {}
+
+                def __init__(self,
+                    data : str,
+                    region = restful.types.region.US
+                ):
+                    if self.all.get(region) == None:
+                        cats = self.all[region] = {}
+                        for item in main.categories(
+                            want = {
+                                'id': None,
+                                'title': None
+                            },
+                            region = region
+                        ):
+                            cats[item.get('id')] = item.get('title')
+
+                    self.id = data
+
+                def __str__(self,
+                    region = restful.types.region.US
+                ):
+                    return self.all.get(region, {}).get(self.id)
+
+                def __repr__(self,
+                    region = restful.types.region.US
+                ):
+                    return f"youtube.category.all.{region}['{self.__str__(region)}']"
+
+            return _
+
 
     def listing(self,
         item_type, # TODO isinstance(restful.types.json.object)
@@ -213,9 +257,13 @@ class api(restful.api):
                         res_parts.details.CONTENT,
                         {'directives': {'quality': 'definition'}}
                     ),
+                    #'category': (
+                    #    res_parts.SNIPPET,
+                    #    {'directives': {'id': 'categoryId'}}
+                    #),
                     'category': (
-                        res_parts.SNIPPET,
-                        {'directives': {'id': 'categoryId'}}
+                        [res_parts.SNIPPET, 'categoryId'],
+                        {'t': self.main.types.category}
                     )
                 },
                 item_expect = want,

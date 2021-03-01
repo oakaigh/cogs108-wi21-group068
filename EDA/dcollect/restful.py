@@ -295,7 +295,9 @@ class api:
                             ),
                             'creator': api.types.social.creator,
                             'video': api.types.social.video,
-                            'category': api.types.social.category
+                            'category': types.custom(
+                                default = api.types.social.category
+                            )
                         }
                     )
 
