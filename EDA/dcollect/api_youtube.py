@@ -4,7 +4,7 @@ from .utils import http
 from . import restful
 
 
-types = restful.api.types.social
+#types = restful.api.types.social
 
 class res_parts:
     class details:
@@ -24,6 +24,7 @@ class res_parts:
 
 class res_types:
     VIDEOS = 'videos'
+    CATEGORIES = 'videoCategories'
     SEARCH = 'search'
     CHANNELS = 'channels'
 
@@ -50,7 +51,7 @@ class utils:
 
         return parts
 
-class filters:
+class types(restful.api.types.social):
     class uid:
         def __new__(cls, data):
             if isinstance(data, dict):
@@ -113,7 +114,7 @@ class api(restful.api):
 
         page_token = None
         curr_count = count
-        while res_count < count:
+        while count == None or res_count < count:
             try:
                 resp = self.get(
                     url = api_url,
@@ -141,7 +142,7 @@ class api(restful.api):
 
             page_token = resp.get('nextPageToken')
             if not page_token:
-                if res_count != count:
+                if count != None and res_count != count:
                     self.log.warn(f'less data returned than expected. '
                                   f'expected {count} but was {res_count}')
                 self.log.info('reached the end of listing')
@@ -151,6 +152,28 @@ class api(restful.api):
 
         if on_result:
             on_result(res)
+
+    def categories(self,
+        want = None,
+        region = restful.types.region.US, language = None,
+        **kwargs
+    ):
+        return self.listing(
+            item_type = types.category,
+            item_directives = {
+                'id': res_parts.ID,
+                'title': [res_parts.SNIPPET, 'title']
+            },
+            item_expect = want,
+            kind = res_types.CATEGORIES,
+            count = None,
+            parts = [res_parts.SNIPPET],
+            query = {
+                'regionCode': region,
+                'hl': language
+            },
+            **kwargs
+        )
 
     class video:
         class chart:
@@ -164,7 +187,7 @@ class api(restful.api):
             return self.main.listing(
                 item_type = types.post,
                 item_directives = {
-                    'id': (res_parts.ID, {'t': filters.uid}),
+                    'id': (res_parts.ID, {'t': types.uid}),
                     'title': [res_parts.SNIPPET, 'title'],
                     'description': [res_parts.SNIPPET, 'description'],
                     'creator': (
@@ -189,6 +212,10 @@ class api(restful.api):
                     'video': (
                         res_parts.details.CONTENT,
                         {'directives': {'quality': 'definition'}}
+                    ),
+                    'category': (
+                        res_parts.SNIPPET,
+                        {'directives': {'id': 'categoryId'}}
                     )
                 },
                 item_expect = want,
@@ -210,7 +237,8 @@ class api(restful.api):
                 'stats': None,
                 'length': None,
                 'tags': None,
-                'video': None
+                'video': None,
+                'category': None
             },
             **kwargs
         ):
@@ -285,7 +313,7 @@ class api(restful.api):
             return self.main.listing(
                 item_type = types.creator,
                 item_directives = {
-                    'id': (res_parts.ID, {'t': filters.uid}),
+                    'id': (res_parts.ID, {'t': types.uid}),
                     'title': [res_parts.SNIPPET, 'title'],
                     'description': [res_parts.SNIPPET, 'description'],
                     'time': (

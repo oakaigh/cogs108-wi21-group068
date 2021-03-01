@@ -1,4 +1,11 @@
-from dcollect import *
+from dcollect.utils.log import log
+from dcollect.utils.thread import threading, thread
+from dcollect.plugins import fasthttp
+
+from dcollect import api_tiktok as tiktok
+from dcollect import api_youtube as youtube
+from dcollect import api_youtubei as youtubei
+
 
 conf = {
     'http': {
@@ -99,6 +106,13 @@ def youtube_test():
         on_result = res_fn
     ):
         item_each_fn(item)
+
+    logger.info('testing: youtube categories')
+    for item in youtube_o.categories(
+        on_result = res_fn
+    ):
+        item_each_fn(item)
+
 
 def youtubei_test():
     youtubei_o = youtubei.api(

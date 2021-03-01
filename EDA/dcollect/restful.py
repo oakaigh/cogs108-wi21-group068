@@ -67,6 +67,9 @@ class types:
 
         return _custom
 
+    class region:
+        US = 'us'
+
     class video:
         class formats:
             UNKNOWN = -1
@@ -200,9 +203,9 @@ class types:
                                     else _data
                             except Exception as e:
                                 # TODO
-                                print(_data)
-                                print(_class, k, keys, args)
-                                raise e # TODO
+                                #print(_data)
+                                #print(_class, k, keys, args)
+                                #raise e # TODO
                                 ret[k] = None
 
                     return ret
@@ -221,6 +224,19 @@ class api:
 
             class tag(types.string):
                 pass
+
+            class category(types.json.object):
+                def __new__(cls, data, directives):
+                    return super().__new__(cls,
+                        data = data,
+                        directives = directives,
+                        classes = {
+                            'id': types.custom(
+                                default = api.types.social.uid
+                            ),
+                            'title': types.string
+                        }
+                    )
 
             class video(types.json.object):
                 def __new__(cls, data, directives):
@@ -278,7 +294,8 @@ class api:
                                 types.custom(default = api.types.social.tag)
                             ),
                             'creator': api.types.social.creator,
-                            'video': api.types.social.video
+                            'video': api.types.social.video,
+                            'category': api.types.social.category
                         }
                     )
 

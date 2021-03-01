@@ -1,12 +1,8 @@
 from .utils import ds
 from .utils.log import log
 from .utils import http
-from .utils.decode import dtypes
 
 from . import restful
-
-import quickjs
-import lxml.html
 
 
 class types:
@@ -26,6 +22,9 @@ class types:
             )
 
 class api(restful.api):
+    import quickjs
+    import lxml.html
+
     def __init__(self, modules, query = None, headers = None):
         super().__init__(
             base_url = 'https://www.youtube.com',
@@ -61,14 +60,14 @@ class api(restful.api):
         resps = super().send(reqs)
 
         for resp in resps:
-            root = lxml.html.document_fromstring(resp)
+            root = self.lxml.html.document_fromstring(resp)
             scripts = root.xpath(
                 f'.//script[contains(text(),"var {o_name}")]'
             )
 
             if len(scripts) > 0:
                 try:
-                    yield quickjs.Function("f",
+                    yield self.quickjs.Function("f",
                         """
                         function f() {
                             try {%s;} catch (e) {;}
@@ -78,7 +77,6 @@ class api(restful.api):
                     )()
                 except:
                     pass
-
 
     class ad:
         class kinds:

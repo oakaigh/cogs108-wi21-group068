@@ -1,3 +1,4 @@
+requests
 grequests
 python-dateutil
 isodate

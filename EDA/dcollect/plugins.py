@@ -1,16 +1,17 @@
 from .utils import http
-import grequests
 
 
 class fasthttp(http.dispatch):
+    import grequests
+
     def __init__(self, conf = None):
-        self._ = grequests.Session()
+        self._ = self.grequests.Session()
 
     def sendall(self, requests):
         greqs = []
 
         for req in requests:
-            greqs.append(grequests.request(
+            greqs.append(self.grequests.request(
                 method = req.method,
                 url = req.url,
                 params = req.query,
@@ -18,7 +19,7 @@ class fasthttp(http.dispatch):
                 session = self._
             ))
 
-        resps = grequests.imap(greqs)
+        resps = self.grequests.imap(greqs)
         for req, resp in zip(requests, resps):
             yield {
                 http.dtypes.RAW: lambda: resp,
