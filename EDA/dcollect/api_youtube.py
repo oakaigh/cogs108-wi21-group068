@@ -4,8 +4,6 @@ from .utils import http
 from . import restful
 
 
-#types = restful.api.types.social
-
 class res_parts:
     class details:
         CONTENT = 'contentDetails'
@@ -38,7 +36,6 @@ class utils:
     def multiparam(vars):
         return ','.join(vars or [])
 
-    # TODO!!!
     @staticmethod
     def hint_parts(hint: dict):
         parts = set()
@@ -257,10 +254,6 @@ class api(restful.api):
                         res_parts.details.CONTENT,
                         {'directives': {'quality': 'definition'}}
                     ),
-                    #'category': (
-                    #    res_parts.SNIPPET,
-                    #    {'directives': {'id': 'categoryId'}}
-                    #),
                     'category': (
                         [res_parts.SNIPPET, 'categoryId'],
                         {'t': self.main.types.category}
