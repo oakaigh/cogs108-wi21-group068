@@ -1,5 +1,8 @@
 import collections
 
+def isnull(o) -> bool:
+    return isinstance(o, type(None))
+
 def isiter(o) -> bool:
     try: iter(o)
     except TypeError:

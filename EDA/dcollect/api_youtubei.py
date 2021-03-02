@@ -40,7 +40,7 @@ class api(restful.api):
     def initial_player_response(self, id) -> dict:
         o_name = 'ytInitialPlayerResponse'
 
-        id = id if isinstance(id, list) else [id]
+        id = id if ds.isiter(id) else [id]
 
         reqs = []
 
@@ -132,17 +132,16 @@ class api(restful.api):
 
             for resp in resps:
                 resp_id = ds.select.descend(resp, ['videoDetails', 'videoId'])
-
-                items = resp.get('adPlacements')
-                if items is None:
-                    yield None
+                if resp_id == None:
                     continue
 
+                items = resp.get('adPlacements')
                 yield {
                     'id': resp_id,
-                    'ads': array_type.__call__(items)
+                    'ads': array_type.__call__(items)   \
+                            if not ds.isnull(items) else None
                 }
-                if not res == None:
+                if not res == None and not items == None:
                     res += items
 
             if on_result:

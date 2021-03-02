@@ -33,10 +33,6 @@ class res_kinds:
 
 class utils:
     @staticmethod
-    def multiparam(vars):
-        return ','.join(vars or [])
-
-    @staticmethod
     def hint_parts(hint: dict):
         parts = set()
 
@@ -61,6 +57,10 @@ class types(restful.api.types.social):
             elif isinstance(data, str):
                 return data
             return None
+
+    class params(restful.types.string):
+        def __new__(cls, data):
+            return ','.join(data) if not ds.isnull(data) else None
 
 class api(restful.api):
     def __init__(self,
@@ -87,7 +87,7 @@ class api(restful.api):
 
         @staticmethod
         def _category(main):
-            class _(restful.types.string):
+            class _:
                 all = {}
 
                 def __init__(self,
@@ -142,7 +142,7 @@ class api(restful.api):
         dutils = restful.utils.directives
         item_directives = dutils.reduce(item_directives, item_expect)
         query_default = {
-            'part': utils.multiparam(
+            'part': types.params(
                         parts or utils.hint_parts(item_directives)
                     )
         }
@@ -287,7 +287,7 @@ class api(restful.api):
                 kind = res_types.VIDEOS,
                 query = {
                     'chart': chart,
-                    'id': utils.multiparam(id) if id else None,
+                    'id': types.params(id),
                     'regionCode': region,
                     'hl': language
                 },
@@ -389,7 +389,7 @@ class api(restful.api):
             return self.listing(
                 kind = res_types.CHANNELS,
                 query = {
-                    'id': utils.multiparam(id) if id else None,
+                    'id': types.params(id),
                     'forUsername': name,
                     'hl': language
                 },
