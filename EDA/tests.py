@@ -56,10 +56,10 @@ def youtube_test():
     for item in youtube_o.video.trending(
         count = count,
         parts = [
-            youtube.res_parts.ID,
-            youtube.res_parts.SNIPPET,
-            youtube.res_parts.STATS,
-            youtube.res_parts.details.CONTENT
+            youtube.resource.parts.ID,
+            youtube.resource.parts.SNIPPET,
+            youtube.resource.parts.STATS,
+            youtube.resource.parts.details.CONTENT
         ],
         #want = {'id': None},
         on_result = res_fn
@@ -88,10 +88,10 @@ def youtube_test():
     for item in youtube_o.channel.info(
         id = ['UC8Zo5A8qICfNAzVGDY_VT7w', 'UC0VOyT2OCBKdQhF3BAbZ-1g'],
         parts = [
-            youtube.res_parts.ID,
-            youtube.res_parts.SNIPPET,
-            youtube.res_parts.STATS,
-            youtube.res_parts.details.CONTENT
+            youtube.resource.parts.ID,
+            youtube.resource.parts.SNIPPET,
+            youtube.resource.parts.STATS,
+            youtube.resource.parts.details.CONTENT
         ],
         #want = {'id': None},
         on_result = res_fn
@@ -130,7 +130,7 @@ def youtubei_test():
 
     logger.info('testing: youtube ad placements')
     for item in youtubei_o.ad.placements(
-        id = 'ur560pZKRfg',
+        id = ['ur560pZKRfg', 'vJH28ICkCdU'],
         on_result = res_fn
     ):
         item_each_fn(item)
@@ -140,7 +140,7 @@ log.enable(level = log.levels.DEBUG)
 
 thread.start([
     #threading.Thread(target = tiktok_test),
-    threading.Thread(target = youtube_test),
-    #threading.Thread(target = youtubei_test)
+    #threading.Thread(target = youtube_test),
+    threading.Thread(target = youtubei_test)
 ])
 thread.join()

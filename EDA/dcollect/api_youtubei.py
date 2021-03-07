@@ -4,6 +4,13 @@ from .utils import http
 
 from . import restful
 
+class resource:
+    class ad:
+        class kinds:
+            START = 'AD_PLACEMENT_KIND_START'
+            END = 'AD_PLACEMENT_KIND_END'
+            MSEC = 'AD_PLACEMENT_KIND_MILLISECONDS'
+            CMD = 'AD_PLACEMENT_KIND_COMMAND_TRIGGERED'
 
 class types:
     class ad(restful.types.json.object):
@@ -40,7 +47,7 @@ class api(restful.api):
     def initial_player_response(self, id) -> dict:
         o_name = 'ytInitialPlayerResponse'
 
-        id = id if ds.isiter(id) else [id]
+        id = id if not isinstance(id, str) and ds.isiter(id) else [id]
 
         reqs = []
 
@@ -79,12 +86,6 @@ class api(restful.api):
                     pass
 
     class ad:
-        class kinds:
-            START = 'AD_PLACEMENT_KIND_START'
-            END = 'AD_PLACEMENT_KIND_END'
-            MSEC = 'AD_PLACEMENT_KIND_MILLISECONDS'
-            CMD = 'AD_PLACEMENT_KIND_COMMAND_TRIGGERED'
-
         def __init__(self, main):
             self.main = main
 
