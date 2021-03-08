@@ -1,7 +1,7 @@
 from .utils import ds
 from .utils.log import log
 from .utils import http
-from . import restful
+from . import cache, restful
 
 
 class resource:
@@ -82,6 +82,11 @@ class types(restful.api.types.social):
         def __new__(cls, data):
             return ','.join(data) if not ds.isnull(data) else None
 
+    @cache.enable_db(
+        load = lambda cl, data: cl.all.update(data),
+        save = lambda cl: cl.all,
+        uid = 'b41d9eeb09c1'
+    )
     class topic:
         all = {}
         default = 'Invalid'
@@ -91,8 +96,8 @@ class types(restful.api.types.social):
             region = restful.types.region.US
         ):
             if not ds.isnull(types._api_obj) and \
-               ds.isnull(self.all.get(region)):
-                cats = self.all[region] = {}
+               ds.isnull(types.topic.all.get(region)):
+                cats = types.topic.all[region] = {}
                 for item in types._api_obj.categories(
                     want = {
                         'id': None,

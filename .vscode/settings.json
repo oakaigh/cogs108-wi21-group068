@@ -2,5 +2,6 @@
     "python.pythonPath": "python3",
     "files.trimTrailingWhitespace": true,
     "files.insertFinalNewline": true,
-    "files.trimFinalNewlines": true
+    "files.trimFinalNewlines": true,
+    "jupyter.jupyterServerType": "local"
 }
