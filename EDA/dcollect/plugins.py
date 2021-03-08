@@ -2,28 +2,36 @@ from .utils import http
 
 
 class fasthttp(http.dispatch):
-    import grequests
+    from gevent import monkey
+    monkey.patch_all()
+
+    import concurrent
+    import requests_futures.sessions
 
     def __init__(self, conf = None):
-        self._ = self.grequests.Session()
+        self.session = self.requests_futures.sessions.FuturesSession()
 
     def sendall(self, requests):
-        greqs = []
+        fs = []
+        ret = []
 
         for req in requests:
-            greqs.append(self.grequests.request(
+            future = self.session.request(
                 method = req.method,
                 url = req.url,
                 params = req.query,
-                headers = req.headers,
-                session = self._
-            ))
+                headers = req.headers
+            )
+            future._req_dtype = req.type
+            fs.append(future)
 
-        resps = self.grequests.imap(greqs)
-        for req, resp in zip(requests, resps):
-            yield {
+        for future in self.concurrent.futures.as_completed(fs):
+            resp = future.result()
+            ret.append({
                 http.dtypes.RAW: lambda: resp,
                 http.dtypes.STREAM: lambda: resp.content,
                 http.dtypes.TEXT: lambda: resp.text,
                 http.dtypes.JSON: lambda: resp.json()
-            }.get(req.type, lambda: None)()
+            }.get(future._req_dtype, lambda: None)())
+
+        return ret

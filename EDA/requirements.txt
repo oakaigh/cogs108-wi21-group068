@@ -1,5 +1,5 @@
 requests
-grequests
+requests_futures
 python-dateutil
 isodate
 quickjs

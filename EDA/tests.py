@@ -1,6 +1,6 @@
 from dcollect.utils.log import log
 from dcollect.utils.thread import threading, thread
-from dcollect.plugins import fasthttp
+from dcollect import plugins
 
 from dcollect import api_tiktok as tiktok
 from dcollect import api_youtube as youtube
@@ -9,7 +9,7 @@ from dcollect import api_youtubei as youtubei
 
 conf = {
     'http': {
-        'module': fasthttp(),
+        'module': plugins.fasthttp(),
         'headers': {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36'
         }
@@ -72,6 +72,12 @@ def youtube_test():
         parts = None,
         want = {'id': None},
         on_result = res_fn
+    ):
+        item_each_fn(item)
+
+    logger.info('testing: youtube video info')
+    for item in youtube_o.video.info(
+        id = ['OpjATUDG1Io']
     ):
         item_each_fn(item)
 
@@ -140,7 +146,7 @@ log.enable(level = log.levels.DEBUG)
 
 thread.start([
     #threading.Thread(target = tiktok_test),
-    #threading.Thread(target = youtube_test),
+    threading.Thread(target = youtube_test),
     threading.Thread(target = youtubei_test)
 ])
 thread.join()

@@ -335,10 +335,13 @@ class api:
         type = http.dtypes.TEXT,
         query = None, headers = None
     ):
-        return next(self.send([http.request(
-            method = http.methods.GET,
-            url = url,
-            type = type,
-            query = query,
-            headers = headers
-        )]))
+        try:
+            return self.send([http.request(
+                method = http.methods.GET,
+                url = url,
+                type = type,
+                query = query,
+                headers = headers
+            )])[0]
+        except IndexError:
+            return None

@@ -58,6 +58,13 @@ class utils:
         return parts
 
 class types(restful.api.types.social):
+    _api_obj = None
+
+    @staticmethod
+    def _register_api_obj(obj):
+        if ds.isnull(types._api_obj):
+            types._api_obj = obj
+
     class uid(restful.types.string):
         def __new__(cls, data):
             if isinstance(data, dict):
@@ -74,6 +81,38 @@ class types(restful.api.types.social):
     class params(restful.types.string):
         def __new__(cls, data):
             return ','.join(data) if not ds.isnull(data) else None
+
+    class topic:
+        all = {}
+        default = 'Invalid'
+
+        def __init__(self,
+            data : str,
+            region = restful.types.region.US
+        ):
+            if not ds.isnull(types._api_obj) and \
+               ds.isnull(self.all.get(region)):
+                cats = self.all[region] = {}
+                for item in types._api_obj.categories(
+                    want = {
+                        'id': None,
+                        'title': None
+                    },
+                    region = region
+                ):
+                    cats[item.get('id')] = item.get('title')
+
+            self.id = data
+
+        def __str__(self,
+            region = restful.types.region.US
+        ):
+            return self.all.get(region, {}).get(self.id, self.default)
+
+        def __repr__(self,
+            region = restful.types.region.US
+        ):
+            return f"youtube.topic.all.{region}['{self.__str__(region)}']"
 
 class api(restful.api):
     def __init__(self,
@@ -92,45 +131,7 @@ class api(restful.api):
         self.video = self.video(self)
         self.channel = self.channel(self)
 
-        self.types = self.types(self)
-
-    class types:
-        def __init__(self, main):
-            self.category = self._category(main)
-
-        @staticmethod
-        def _category(main):
-            class _:
-                all = {}
-
-                def __init__(self,
-                    data : str,
-                    region = restful.types.region.US
-                ):
-                    if ds.isnull(self.all.get(region)):
-                        cats = self.all[region] = {}
-                        for item in main.categories(
-                            want = {
-                                'id': None,
-                                'title': None
-                            },
-                            region = region
-                        ):
-                            cats[item.get('id')] = item.get('title')
-
-                    self.id = data
-
-                def __str__(self,
-                    region = restful.types.region.US
-                ):
-                    return self.all.get(region, {}).get(self.id)
-
-                def __repr__(self,
-                    region = restful.types.region.US
-                ):
-                    return f"youtube.category.all.{region}['{self.__str__(region)}']"
-
-            return _
+        types._register_api_obj(self)
 
     def listing(self,
         item_type,
@@ -144,6 +145,7 @@ class api(restful.api):
         query,
         on_result = None
     ) -> dict:
+        ret = []
         res = [] if on_result else None
 
         max_count = 50
@@ -160,7 +162,7 @@ class api(restful.api):
         }
         array_type = restful.types.json.array(
             dutils.compile(item_type, item_directives),
-            iterator = True
+            iterator = False
         )
 
         res_count = 0
@@ -169,7 +171,7 @@ class api(restful.api):
         curr_count = count
         while ds.isnull(count) or res_count < count:
             try:
-                resp = self.get(
+                resp = super().get(
                     url = api_url,
                     type = api_resp_type,
                     query = ds.merge.dicts({
@@ -180,6 +182,10 @@ class api(restful.api):
             except Exception as e:
                 self.log.fatal(f'fatal error {e}. cannot proceed')
 
+            if ds.isnull(resp):
+                self.log.warn(f'invalid response from {api_url}')
+                return None
+
             items = resp.get('items')
             if not items:
                 self.log.warn(f"{resp.get('error', '?')}: "
@@ -189,7 +195,7 @@ class api(restful.api):
                 self.log.warn('invalid entry')
             else:
                 res_count += len(items)
-                yield from array_type.__call__(items)
+                ret += array_type.__call__(items)
                 if not ds.isnull(res):
                     res += items
 
@@ -205,6 +211,8 @@ class api(restful.api):
 
         if on_result:
             on_result(res)
+
+        return ret
 
     def categories(self,
         want = None,
@@ -268,7 +276,7 @@ class api(restful.api):
                     ),
                     'category': (
                         [resource.parts.SNIPPET, 'categoryId'],
-                        {'t': self.main.types.category}
+                        {'t': types.topic}
                     )
                 },
                 item_expect = want,
