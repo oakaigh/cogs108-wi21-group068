@@ -132,9 +132,8 @@ class api(restful.api):
 
             return _
 
-
     def listing(self,
-        item_type, # TODO isinstance(restful.types.json.object)
+        item_type,
         item_directives,
         item_expect,
 
