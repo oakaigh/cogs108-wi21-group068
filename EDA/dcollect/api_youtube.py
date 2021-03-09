@@ -150,25 +150,6 @@ class types(restful.api.types.social):
         def __ne__(self, other):
             return not self.__eq__(other)
 
-        '''
-        def __getstate__(self):
-
-            ret = self.__dict__.copy()
-            ret['cls_x'] = A.x
-            return ret
-
-            #return self
-            pass
-
-        def __setstate__(self, state):
-            #self.__dict__.update(self)
-            if not types.topic.all:
-                types.topic.all = state.pop('all', {})
-
-
-            pass
-        '''
-
 class api(restful.api):
     def __init__(self,
         modules, key,
