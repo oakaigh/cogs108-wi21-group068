@@ -2,8 +2,8 @@ from .utils import http
 
 
 class fasthttp(http.dispatch):
-    from gevent import monkey
-    monkey.patch_all()
+    import gevent.monkey
+    gevent.monkey.patch_all()
 
     import concurrent
     import requests_futures.sessions

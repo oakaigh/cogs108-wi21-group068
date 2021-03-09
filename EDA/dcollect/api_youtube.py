@@ -112,7 +112,7 @@ class types(restful.api.types.social):
         def describe(self,
             region = restful.types.region.US
         ):
-            return self.all.get(region, {}).get(self.id, self.default)
+            return self.all.get(region, {}).get(str(self.id), self.default)
 
         # `dict` yeeted, optimization needed
         def cid(self,
@@ -132,14 +132,11 @@ class types(restful.api.types.social):
         def __repr__(self,
             region = restful.types.region.US
         ):
-            return f"youtube.topic.all.{region}['{self.__str__(region)}']"
+            return f"youtube.topic.all.{region}['{self.__str__(region = region)}']"
 
         def __eq__(self, other):
             if type(self) == type(other):
                 return self.id == other.id
-
-            if isinstance(other, int):
-                return self.id == other
 
             if isinstance(other, str):
                 for region in (
@@ -153,11 +150,24 @@ class types(restful.api.types.social):
         def __ne__(self, other):
             return not self.__eq__(other)
 
+        '''
         def __getstate__(self):
+
+            ret = self.__dict__.copy()
+            ret['cls_x'] = A.x
+            return ret
+
+            #return self
             pass
 
         def __setstate__(self, state):
+            #self.__dict__.update(self)
+            if not types.topic.all:
+                types.topic.all = state.pop('all', {})
+
+
             pass
+        '''
 
 class api(restful.api):
     def __init__(self,

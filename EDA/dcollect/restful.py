@@ -201,11 +201,7 @@ class types:
                                 ret[k] = _class(_data, **args) \
                                     if not isinstance(_data, _class) \
                                     else _data
-                            except Exception as e:
-                                # TODO
-                                #print(_data)
-                                #print(_class, k, keys, args)
-                                #raise e # TODO
+                            except Exception:
                                 ret[k] = None
 
                     return ret
