@@ -1,7 +1,7 @@
-from .utils import ds
 from .utils.log import log
-from .utils import http
+from .utils import ds, http
 from . import cache, restful
+from .utils import asyncish
 
 
 class resource:
@@ -370,12 +370,46 @@ class api(restful.api):
         def info(self, id, **kwargs):
             if ds.isnull(id):
                 return None
+
+            max_count = 50
+            tasks = []
+
+            loop = asyncish.asyncio.new_event_loop()
+
+            for _id in ds.chunk(
+                iterable = id if ds.isiter(id) else [id],
+                size = max_count
+            ):
+                tasks.append(
+                    asyncish.async_wraps(
+                        lambda: self.all(
+                            id = _id,
+                            chart = resource.chart.NONE,
+                            count = len(_id),
+                            **kwargs
+                        )
+                    )(loop = loop)
+                )
+
+            done, _ = loop.run_until_complete(
+                asyncish.asyncio.wait(tasks, loop = loop)
+            )
+            loop.close()
+
+            ret = []
+            for fut in done:
+                ret.append(fut.result())
+
+            return ret
+
+            '''
             return self.all(
                 id = id,
                 chart = resource.chart.NONE,
                 count = len(id) if ds.isiter(id) else len([id]),
                 **kwargs
             )
+            '''
 
         def search(self,
             keyword,
@@ -460,8 +494,42 @@ class api(restful.api):
             )
 
         def info(self, id, **kwargs):
+            if ds.isnull(id):
+                return None
+
+            max_count = 50
+            tasks = []
+
+            loop = asyncish.asyncio.new_event_loop()
+            for _id in ds.chunk(
+                iterable = id if ds.isiter(id) else [id],
+                size = max_count
+            ):
+                tasks.append(
+                    asyncish.async_wraps(
+                        lambda: self.all(
+                            id = _id,
+                            count = len(_id),
+                            **kwargs
+                        )
+                    )(loop = loop)
+                )
+
+            done, _ = loop.run_until_complete(
+                asyncish.asyncio.wait(tasks, loop = loop)
+            )
+            loop.close()
+
+            ret = []
+            for fut in done:
+                ret.append(fut.result())
+
+            return ret
+
+            '''
             return self.all(
                 id = id,
-                count = len(id) if ds.isiter(id) else len([id]),
+                #count = len(id) if ds.isiter(id) else len([id]),
                 **kwargs
             )
+            '''

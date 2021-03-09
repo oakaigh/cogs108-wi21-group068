@@ -1,4 +1,5 @@
 import collections
+import itertools
 
 def isnull(o) -> bool:
     return isinstance(o, type(None))
@@ -10,8 +11,20 @@ def isiter(o) -> bool:
     return True
 
 """
+Split an iterable into evenly sized chunks
+All credits goto @markus-jarderot
+"""
+def chunk(iterable, size):
+    it = iter(iterable)
+    while True:
+        item = list(itertools.islice(it, size))
+        if not item:
+            break
+        yield item
+
+"""
 Update a nested dictionary or similar mapping.
-Stolen from https://stackoverflow.com/a/30655448/11934495
+Stolen from @alex-martelli's SO answer
 """
 def deep_update(
     source,
