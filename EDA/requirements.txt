@@ -1,5 +1,6 @@
 requests
 requests_futures
+portalocker
 python-dateutil
 isodate
 quickjs

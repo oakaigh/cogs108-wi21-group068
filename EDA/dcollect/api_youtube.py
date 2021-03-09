@@ -83,7 +83,7 @@ class types(restful.api.types.social):
             return ','.join(data) if not ds.isnull(data) else None
 
     @cache.enable_db(
-        load = lambda cl, data: cl.all.update(data),
+        load = lambda cl, data: cl.all.update(data or {}),
         save = lambda cl: cl.all,
         uid = 'b41d9eeb09c1'
     )
@@ -109,15 +109,55 @@ class types(restful.api.types.social):
 
             self.id = data
 
-        def __str__(self,
+        def describe(self,
             region = restful.types.region.US
         ):
             return self.all.get(region, {}).get(self.id, self.default)
+
+        # `dict` yeeted, optimization needed
+        def cid(self,
+            region = restful.types.region.US
+        ):
+            for _cid, _desc in  \
+                    self.all.get(region, {}).items():
+                if _cid == self.id:
+                    return _cid
+            return None
+
+        def __str__(self,
+            region = restful.types.region.US
+        ):
+            return self.describe(region = region)
 
         def __repr__(self,
             region = restful.types.region.US
         ):
             return f"youtube.topic.all.{region}['{self.__str__(region)}']"
+
+        def __eq__(self, other):
+            if type(self) == type(other):
+                return self.id == other.id
+
+            if isinstance(other, int):
+                return self.id == other
+
+            if isinstance(other, str):
+                for region in (
+                    self.all.keys() if self.all else {}
+                ):
+                    if self.describe(region = region) == other:
+                        return True
+
+            return False
+
+        def __ne__(self, other):
+            return not self.__eq__(other)
+
+        def __getstate__(self):
+            pass
+
+        def __setstate__(self, state):
+            pass
 
 class api(restful.api):
     def __init__(self,
