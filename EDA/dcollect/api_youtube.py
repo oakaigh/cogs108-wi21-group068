@@ -237,13 +237,15 @@ class api(restful.api):
 
             page_token = resp.get('nextPageToken')
             if not page_token:
-                if not ds.isnull(count) and res_count != count:
-                    self.log.warn(f'less data returned than expected. '
-                                  f'expected {count} but was {res_count}')
+                if not ds.isnull(count):
+                    if res_count != count:
+                        self.log.warn(f'less data returned than expected. '
+                                    f'expected {count} but was {res_count}')
                 self.log.info('reached the end of listing')
                 break
 
-            curr_count = curr_count - min(curr_count, max_count)
+            if not ds.isnull(curr_count):
+                curr_count = curr_count - min(curr_count, max_count)
 
         if on_result:
             on_result(res)
