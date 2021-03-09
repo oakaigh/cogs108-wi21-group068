@@ -398,7 +398,7 @@ class api(restful.api):
 
             ret = []
             for fut in done:
-                ret.append(fut.result())
+                ret += fut.result()
 
             return ret
 
@@ -522,7 +522,7 @@ class api(restful.api):
 
             ret = []
             for fut in done:
-                ret.append(fut.result())
+                ret += fut.result()
 
             return ret
 
