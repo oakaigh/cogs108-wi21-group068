@@ -90,6 +90,7 @@ class api(restful.api):
             self.main = main
 
         def placements(self, id, want = None, on_result = None) -> dict:
+            ret = []
             res = [] if on_result else None
 
             resps = self.main.initial_player_response(id = id)
@@ -137,13 +138,15 @@ class api(restful.api):
                     continue
 
                 items = resp.get('adPlacements')
-                yield {
+                ret.append({
                     'id': resp_id,
                     'ads': array_type.__call__(items)   \
                             if not ds.isnull(items) else None
-                }
+                })
                 if not res == None and not items == None:
                     res += items
 
             if on_result:
                 on_result(res)
+
+            return ret

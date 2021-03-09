@@ -5,8 +5,9 @@ import pprint
 class log:
     class levels:
         NONE = 0
-        INFO = 1
-        DEBUG = 2
+        WARNING = 1
+        INFO = 2
+        DEBUG = 3
 
     def __init__(self, scope_id = None):
         self.id = scope_id
@@ -22,6 +23,7 @@ class log:
     def set_level(level):
         logging.getLogger().setLevel({
             log.levels.NONE: logging.NOTSET,
+            log.levels.WARNING: logging.WARNING,
             log.levels.INFO: logging.INFO,
             log.levels.DEBUG: logging.DEBUG
         }.get(level))

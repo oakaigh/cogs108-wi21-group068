@@ -147,6 +147,6 @@ log.enable(level = log.levels.DEBUG)
 thread.start([
     #threading.Thread(target = tiktok_test),
     threading.Thread(target = youtube_test),
-    threading.Thread(target = youtubei_test)
+    #threading.Thread(target = youtubei_test)
 ])
 thread.join()
