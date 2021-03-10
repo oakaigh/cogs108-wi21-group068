@@ -84,7 +84,7 @@ class types(restful.api.types.social):
 
     class params(restful.types.string):
         def __new__(cls, data):
-            return ','.join(data) if not ds.isnull(data) else None
+            return ','.join(set(data)) if not ds.isnull(data) else None
 
     @cache.enable_db(
         load = lambda cl, data: cl.all.update(data or {}),

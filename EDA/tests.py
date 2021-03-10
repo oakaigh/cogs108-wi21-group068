@@ -20,7 +20,7 @@ modules = {
     'http': conf['http']['module']
 }
 
-count = 1
+count = 100
 log_resp = False
 
 
@@ -52,6 +52,7 @@ def youtube_test():
         headers = conf.get('headers')
     )
 
+    '''
     logger.info('testing: youtube trending')
     for item in youtube_o.video.trending(
         count = count,
@@ -65,7 +66,9 @@ def youtube_test():
         on_result = res_fn
     ):
         item_each_fn(item)
+    '''
 
+    items = []
     logger.info('testing: youtube trending (parts == None)')
     for item in youtube_o.video.trending(
         count = count,
@@ -73,8 +76,12 @@ def youtube_test():
         want = {'id': None},
         on_result = res_fn
     ):
-        item_each_fn(item)
+        #item_each_fn(item)
+        items.append(item)
 
+    logger.dump(items)
+
+    '''
     logger.info('testing: youtube video info')
     for item in youtube_o.video.info(
         id = ['OpjATUDG1Io']
@@ -112,13 +119,15 @@ def youtube_test():
         on_result = res_fn
     ):
         item_each_fn(item)
+    '''
 
+    '''
     logger.info('testing: youtube categories')
     for item in youtube_o.categories(
         on_result = res_fn
     ):
         item_each_fn(item)
-
+    '''
 
 def youtubei_test():
     youtubei_o = youtubei.api(
