@@ -115,11 +115,11 @@ class types:
     class time:
         import datetime
 
-        # TODO
         import dateutil.parser
         import isodate
 
         class formats:
+            RAW = -1
             UNIX = 0
             ISO8601 = 1
 
@@ -128,11 +128,28 @@ class types:
                 data,#: typing.Union[types.string, types.integer],
                 format#: types.time.formats
             ):
+                if ds.isnull(data):
+                    return None
                 return {
+                    types.time.formats.RAW:
+                        lambda : data,
                     types.time.formats.UNIX:
                         lambda: types.time.datetime.datetime.fromtimestamp(types.integer(data)),
                     types.time.formats.ISO8601:
                         lambda: types.time.dateutil.parser.isoparse(types.string(data))
+                }.get(format, lambda: None)()
+
+            @staticmethod
+            def dumps(data, format):
+                if ds.isnull(data):
+                    return None
+                return {
+                    types.time.formats.RAW:
+                        lambda : data,
+                    types.time.formats.UNIX:
+                        lambda: types.time.datetime.datetime.timestamp(data),
+                    types.time.formats.ISO8601:
+                        lambda: data.astimezone().isoformat()
                 }.get(format, lambda: None)()
 
         class relative(datetime.timedelta):
@@ -140,7 +157,11 @@ class types:
                 data,#: typing.Union[types.string, types.integer],
                 format#: types.time.formats
             ):
+                if ds.isnull(data):
+                    return None
                 return {
+                    types.time.formats.RAW:
+                        lambda : data,
                     types.time.formats.UNIX:
                         lambda:
                             types.time.datetime.timedelta(

@@ -44,6 +44,10 @@ class resource:
         VIDEO_COUNT = 'videoCount'
         VIEW_COUNT = 'viewCount'
 
+    class safesearch:
+        DEFAULT = None
+        NONE = 'none'
+
 class utils:
     @staticmethod
     def hint_parts(hint: dict):
@@ -107,7 +111,7 @@ class types(restful.api.types.social):
                 ):
                     cats[item.get('id')] = item.get('title')
 
-            self.id = data
+            self.id = str(data)
 
         def describe(self,
             region = restful.types.region.US
@@ -136,7 +140,7 @@ class types(restful.api.types.social):
 
         def __eq__(self, other):
             if type(self) == type(other):
-                return self.id == other.id
+                return str(self.id) == str(other.id)
 
             if isinstance(other, str):
                 for region in (
@@ -148,7 +152,22 @@ class types(restful.api.types.social):
             return False
 
         def __ne__(self, other):
-            return not self.__eq__(other)
+            return not self.__eq__(str(other.id))
+
+        def __ge__(self, other):
+            return str(self.id).__ge__(str(other.id))
+
+        def __gt__(self, other):
+            return str(self.id).__gt__(str(other.id))
+
+        def __le__(self, other):
+            return str(self.id).__le__(str(other.id))
+
+        def __lt__(self, other):
+            return str(self.id).__lt__(str(other.id))
+
+        def __hash__(self):
+            return str(self.id).__hash__()
 
 class api(restful.api):
     def __init__(self,
@@ -245,7 +264,7 @@ class api(restful.api):
                 break
 
             if not ds.isnull(curr_count):
-                curr_count = curr_count - min(curr_count, max_count)
+                curr_count -= min(curr_count, max_count)
 
         if on_result:
             on_result(res)
@@ -402,19 +421,12 @@ class api(restful.api):
 
             return ret
 
-            '''
-            return self.all(
-                id = id,
-                chart = resource.chart.NONE,
-                count = len(id) if ds.isiter(id) else len([id]),
-                **kwargs
-            )
-            '''
-
         def search(self,
             keyword,
             count = 1,
             order = None,
+            safesearch = resource.safesearch.DEFAULT,
+            published_before = None, published_after = None,
             region = None, language = None,
             want = {
                 'id': None,
@@ -433,7 +445,18 @@ class api(restful.api):
                     'regionCode': region,
                     'relevanceLanguage': language,
                     'order': order,
-                    'type': resource.kinds.VIDEO
+                    'type': resource.kinds.VIDEO,
+                    'safeSearch': safesearch,
+                    'publishedBefore':
+                        restful.types.time.absolute.dumps(
+                            data = published_before,
+                            format = restful.types.time.formats.ISO8601
+                        ),
+                    'publishedAfter':
+                        restful.types.time.absolute.dumps(
+                            data = published_after,
+                            format = restful.types.time.formats.ISO8601
+                        ),
                 },
                 count = count,
                 parts = [resource.parts.SNIPPET],
@@ -525,11 +548,3 @@ class api(restful.api):
                 ret += fut.result()
 
             return ret
-
-            '''
-            return self.all(
-                id = id,
-                #count = len(id) if ds.isiter(id) else len([id]),
-                **kwargs
-            )
-            '''
