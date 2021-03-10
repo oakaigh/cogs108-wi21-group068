@@ -14,7 +14,11 @@ def isiter(o) -> bool:
 Split an iterable into evenly sized chunks
 All credits goto @markus-jarderot
 """
-def chunk(iterable, size):
+def chunk(iterable, size = None):
+    if isnull(size):
+        yield list(iterable)
+        return
+    
     it = iter(iterable)
     while True:
         item = list(itertools.islice(it, size))
@@ -57,8 +61,8 @@ class merge:
     def dictlist(dicts: list) -> dict:
         ret = None
         for d in dicts:
-            if d:
-                if not ret:
+            if not isnull(d):
+                if isnull(ret):
                     ret = dict()
                 ret.update(d)
         return ret

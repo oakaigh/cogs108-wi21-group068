@@ -172,12 +172,30 @@ class types(restful.api.types.social):
 class api(restful.api):
     def __init__(self,
         modules, key,
+        experiment = False,
         query = None, headers = None
     ):
+        base_url = None
+        base_headers = {}
+        
+        if not experiment:
+            base_url = 'https://youtube.googleapis.com'
+        else:
+            base_url = 'https://content-youtube.googleapis.com'
+            base_headers = {
+                'authority': 'content-youtube.googleapis.com',
+                'x-origin': 'https://explorer.apis.google.com',
+                'x-referer': 'https://explorer.apis.google.com',
+                'accept': '*/*',
+                'sec-fetch-site': 'same-origin',
+                'sec-fetch-mode': 'cors',
+                'sec-fetch-dest': 'empty'
+            }
+        
         super().__init__(
-            base_url = 'https://youtube.googleapis.com',
+            base_url = base_url,
             query = ds.merge.dicts({'key': key}, query),
-            headers = headers,
+            headers = ds.merge.dicts(base_headers, headers),
             modules = modules
         )
 
@@ -396,7 +414,7 @@ class api(restful.api):
             loop = asyncish.asyncio.new_event_loop()
 
             for _id in ds.chunk(
-                iterable = id if ds.isiter(id) else [id],
+                iterable = set(id if ds.isiter(id) else [id]),
                 size = max_count
             ):
                 tasks.append(
@@ -525,7 +543,7 @@ class api(restful.api):
 
             loop = asyncish.asyncio.new_event_loop()
             for _id in ds.chunk(
-                iterable = id if ds.isiter(id) else [id],
+                iterable = set(id if ds.isiter(id) else [id]),
                 size = max_count
             ):
                 tasks.append(

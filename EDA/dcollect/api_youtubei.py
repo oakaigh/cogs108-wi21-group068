@@ -44,27 +44,29 @@ class api(restful.api):
 
         self.ad = self.ad(self)
 
-    def initial_player_response(self, id) -> dict:
+    def initial_player_response(self, id, throttle_size = 50) -> dict:
         o_name = 'ytInitialPlayerResponse'
 
-        id = id if not isinstance(id, str) and ds.isiter(id) else [id]
+        id = set(id if not isinstance(id, str) and ds.isiter(id) else [id])
 
-        reqs = []
+        resps = []
+        for chunk in ds.chunk(id, size = throttle_size):
+            for i in chunk:
+                reqs = []
 
-        for i in id:
-            try:
-                reqs.append(
-                    http.request(
-                        method = http.methods.GET,
-                        url = 'watch/',
-                        type = http.dtypes.TEXT,
-                        query = {'v': i}
+                try:
+                    reqs.append(
+                        http.request(
+                            method = http.methods.GET,
+                            url = 'watch/',
+                            type = http.dtypes.TEXT,
+                            query = {'v': i}
+                        )
                     )
-                )
-            except Exception as e:
-                self.log.fatal(f'fatal error {e}. cannot proceed')
+                except Exception as e:
+                    self.log.fatal(f'fatal error {e}. cannot proceed')
 
-        resps = super().send(reqs)
+                resps += super().send(reqs)
 
         for resp in resps:
             root = self.lxml.html.document_fromstring(resp)
@@ -82,18 +84,19 @@ class api(restful.api):
                         }
                         """ % (scripts[0].text_content(), o_name)
                     )()
-                except:
+                except Exception as e:
+                    raise e
                     pass
 
     class ad:
         def __init__(self, main):
             self.main = main
 
-        def placements(self, id, want = None, on_result = None) -> dict:
+        def placements(self, id, want = None, on_result = None, throttle_size = 50) -> dict:
             ret = []
             res = [] if on_result else None
 
-            resps = self.main.initial_player_response(id = id)
+            resps = self.main.initial_player_response(id = id, throttle_size = throttle_size)
             if resps is None:
                 return None
 

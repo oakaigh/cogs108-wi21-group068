@@ -29,6 +29,16 @@ def md5_encode(s: str):
 def as_fname(s: str):
     return md5_encode(s)
 
+
+import datetime
+
+def datetime_range(dtype = datetime.datetime, *args, **kwargs):
+    return (
+        dtype.min.replace(*args, **kwargs),
+        dtype.max.replace(*args, **kwargs)
+    )
+
+
 try:
     import pandas as pd
 except ImportError:
@@ -59,15 +69,15 @@ def df_drop_duplicates(df, level = None, *args, **kwargs):
 def df_load_pickle(fname, *args, **kwargs):
     return pd.read_pickle(fname, *args, **kwargs)
 
+def df_update(df, other, *args, **kwargs):
+    return other.combine_first(other = df)
+
 def df_update_pickle(df, fname, proto = 3, *args, **kwargs):
     import os
 
     df_updated = None
     if os.path.isfile(fname):
-        df_updated = df_load_pickle(fname)
-        df_updated = df.combine_first(
-            other = df_updated
-        )
+        df_updated = df_update(df_load_pickle(fname), df)
     else:
         df_updated = df
 
