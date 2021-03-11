@@ -3,9 +3,9 @@ import pandas as pd
 import os
 import logging
 
-from .dcollect import plugins
-from .dcollect import api_youtube as youtube
-from .dcollect import api_youtubei as youtubei
+from dcollect import plugins
+from dcollect import api_youtube as youtube
+from dcollect import api_youtubei as youtubei
 
 modules = {'http': plugins.fasthttp()}
 headers = None
@@ -52,7 +52,7 @@ pickle_proto = 3
 dataset = utils.EDA.dataset(f'dsamples/youtube_search_{dataset_id}.dataset')
 
 def df_search_gen(*args, **kwargs):
-    from .dcollect.utils.log import log
+    from dcollect.utils.log import log
     log.enable(level = log.levels.WARNING)
     import concurrent.futures
 
