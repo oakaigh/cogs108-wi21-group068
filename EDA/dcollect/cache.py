@@ -25,8 +25,8 @@ class pickledb(db_base):
 
     def __init__(self, path, protocol = 3):
         self.path = path
-        self.proto = protocol
         self.os.makedirs(path, exist_ok = True)
+        self.proto = protocol
 
     def _read_raw(self, path):
         return open(path, 'rb')

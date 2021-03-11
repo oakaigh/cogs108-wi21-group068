@@ -51,9 +51,8 @@ class api(restful.api):
 
         resps = []
         for chunk in ds.chunk(id, size = throttle_size):
+            reqs = []
             for i in chunk:
-                reqs = []
-
                 try:
                     reqs.append(
                         http.request(
@@ -66,7 +65,7 @@ class api(restful.api):
                 except Exception as e:
                     self.log.fatal(f'fatal error {e}. cannot proceed')
 
-                resps += super().send(reqs)
+            resps += super().send(reqs)
 
         for resp in resps:
             root = self.lxml.html.document_fromstring(resp)

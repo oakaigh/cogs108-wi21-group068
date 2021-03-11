@@ -72,13 +72,27 @@ def df_load_pickle(fname, *args, **kwargs):
 def df_update(df, other, *args, **kwargs):
     return other.combine_first(other = df)
 
-def df_update_pickle(df, fname, proto = 3, *args, **kwargs):
+def df_update_pickle(df, fname, proto = 3, overwrite = False, *args, **kwargs):
     import os
 
     df_updated = None
-    if os.path.isfile(fname):
+    if not overwrite and os.path.isfile(fname):
         df_updated = df_update(df_load_pickle(fname), df)
     else:
         df_updated = df
 
     df_updated.to_pickle(fname, protocol = proto, *args, **kwargs)
+
+class eda_utils:
+    class dataset:
+        import os 
+        
+        def __init__(self, path):
+            self.path = path
+            self.os.makedirs(path, exist_ok = True)
+
+        def load(self, name, *args, **kwargs):
+            return df_load_pickle(f'{self.path}/{name}', *args, **kwargs)
+
+        def update(self, name, df, *args, **kwargs):
+            return df_update_pickle(df, f'{self.path}/{name}', *args, **kwargs)

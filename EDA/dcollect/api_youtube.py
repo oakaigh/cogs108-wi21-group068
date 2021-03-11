@@ -542,6 +542,7 @@ class api(restful.api):
             tasks = []
 
             loop = asyncish.asyncio.new_event_loop()
+            
             for _id in ds.chunk(
                 iterable = set(id if ds.isiter(id) else [id]),
                 size = max_count
