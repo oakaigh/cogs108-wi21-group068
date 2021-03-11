@@ -10,7 +10,6 @@ class fasthttp(http.dispatch):
 
     def sendall(self, requests):
         fs = []
-        ret = []
 
         for req in requests:
             future = self.session.request(
@@ -24,11 +23,9 @@ class fasthttp(http.dispatch):
 
         for future in self.concurrent.futures.as_completed(fs):
             resp = future.result()
-            ret.append({
+            yield {
                 http.dtypes.RAW: lambda: resp,
                 http.dtypes.STREAM: lambda: resp.content,
                 http.dtypes.TEXT: lambda: resp.text,
                 http.dtypes.JSON: lambda: resp.json()
-            }.get(future._req_dtype, lambda: None)())
-
-        return ret
+            }.get(future._req_dtype, lambda: None)()

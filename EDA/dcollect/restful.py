@@ -345,7 +345,7 @@ class api:
             req.headers = ds.merge.dicts(req.headers,
                             self.defaults['request']['headers'])
 
-        return self.modules['http'].sendall(requests)
+        yield from self.modules['http'].sendall(requests)
 
     def get(self,
         url: str,
@@ -353,12 +353,12 @@ class api:
         query = None, headers = None
     ):
         try:
-            return self.send([http.request(
+            return next(self.send([http.request(
                 method = http.methods.GET,
                 url = url,
                 type = type,
                 query = query,
                 headers = headers
-            )])[0]
-        except IndexError:
+            )]))
+        except StopIteration:
             return None

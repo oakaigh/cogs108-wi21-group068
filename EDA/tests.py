@@ -20,7 +20,7 @@ modules = {
     'http': conf['http']['module']
 }
 
-count = 100
+count = 50
 log_resp = False
 
 
