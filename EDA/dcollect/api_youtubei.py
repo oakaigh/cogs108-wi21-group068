@@ -48,6 +48,8 @@ class api(restful.api):
         o_name = 'ytInitialPlayerResponse'
 
         id = set(id if not isinstance(id, str) and ds.isiter(id) else [id])
+        
+        res = []
 
         resps = []
         for chunk in ds.chunk(id, size = throttle_size):
@@ -75,17 +77,17 @@ class api(restful.api):
 
             if len(scripts) > 0:
                 try:
-                    yield self.quickjs.Function("f",
+                    res.append(self.quickjs.Function("f",
                         """
                         function f() {
-                            try {%s;} catch (e) {;}
-                            return %s;
+                            %s; return %s;
                         }
                         """ % (scripts[0].text_content(), o_name)
-                    )()
+                    )())
                 except Exception as e:
-                    raise e
                     pass
+                
+        return res
 
     class ad:
         def __init__(self, main):
