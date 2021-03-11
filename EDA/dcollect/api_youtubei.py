@@ -85,6 +85,7 @@ class api(restful.api):
                         """ % (scripts[0].text_content(), o_name)
                     )())
                 except Exception as e:
+                    self.log.warning(f'javascript engine error {e}. ignoring')
                     pass
                 
         return res
@@ -139,6 +140,7 @@ class api(restful.api):
             for resp in resps:
                 resp_id = ds.select.descend(resp, ['videoDetails', 'videoId'])
                 if resp_id == None:
+                    self.main.log.warn('missing video ID. ignoring')
                     continue
 
                 items = resp.get('adPlacements')
