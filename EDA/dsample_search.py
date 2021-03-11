@@ -1,4 +1,4 @@
-from . import utils
+import utils
 import pandas as pd
 import os
 import logging
