@@ -48,7 +48,7 @@ class api(restful.api):
         o_name = 'ytInitialPlayerResponse'
 
         id = set(id if not isinstance(id, str) and ds.isiter(id) else [id])
-        
+
         res = []
 
         resps = []
@@ -85,9 +85,9 @@ class api(restful.api):
                         """ % (scripts[0].text_content(), o_name)
                     )())
                 except Exception as e:
-                    self.log.warning(f'javascript engine error {e}. ignoring')
+                    self.log.warn(f'javascript engine error {e}. ignoring')
                     pass
-                
+
         return res
 
     class ad:

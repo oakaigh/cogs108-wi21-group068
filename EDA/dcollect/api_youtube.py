@@ -84,7 +84,7 @@ class types(restful.api.types.social):
 
     class params(restful.types.string):
         def __new__(cls, data):
-            return ','.join(set(data)) if not ds.isnull(data) else None
+            return ','.join(data) if not ds.isnull(data) else None
 
     @cache.enable_db(
         load = lambda cl, data: cl.all.update(data or {}),
@@ -177,7 +177,7 @@ class api(restful.api):
     ):
         base_url = None
         base_headers = {}
-        
+
         if not experiment:
             base_url = 'https://youtube.googleapis.com'
         else:
@@ -191,7 +191,7 @@ class api(restful.api):
                 'sec-fetch-mode': 'cors',
                 'sec-fetch-dest': 'empty'
             }
-        
+
         super().__init__(
             base_url = base_url,
             query = ds.merge.dicts({'key': key}, query),
@@ -542,7 +542,7 @@ class api(restful.api):
             tasks = []
 
             loop = asyncish.asyncio.new_event_loop()
-            
+
             for _id in ds.chunk(
                 iterable = set(id if ds.isiter(id) else [id]),
                 size = max_count
