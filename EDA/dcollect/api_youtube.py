@@ -411,7 +411,8 @@ class api(restful.api):
             max_count = 50
             tasks = []
 
-            loop = asyncish.asyncio.new_event_loop()
+            #loop = asyncish.asyncio.new_event_loop()
+            loop = asyncish.default_loop()
 
             for _id in ds.chunk(
                 iterable = set(id if ds.isiter(id) else [id]),
@@ -431,7 +432,7 @@ class api(restful.api):
             done, _ = loop.run_until_complete(
                 asyncish.asyncio.wait(tasks, loop = loop)
             )
-            loop.close()
+            #loop.close()
 
             ret = []
             for fut in done:
@@ -541,7 +542,8 @@ class api(restful.api):
             max_count = 50
             tasks = []
 
-            loop = asyncish.asyncio.new_event_loop()
+            #loop = asyncish.asyncio.new_event_loop()
+            loop = asyncish.default_loop()
 
             for _id in ds.chunk(
                 iterable = set(id if ds.isiter(id) else [id]),
@@ -560,7 +562,7 @@ class api(restful.api):
             done, _ = loop.run_until_complete(
                 asyncish.asyncio.wait(tasks, loop = loop)
             )
-            loop.close()
+            #loop.close()
 
             ret = []
             for fut in done:
